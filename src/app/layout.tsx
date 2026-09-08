@@ -1,0 +1,47 @@
+import type { Metadata, Viewport } from "next";
+import { Providers } from "@/components/providers";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import "./globals.css";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://colorflow.example.com";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "ColorFlow — 10,000+ Curated Color Palettes",
+    template: "%s · ColorFlow",
+  },
+  description:
+    "Beautiful color palettes with a harmony generator. Browse 10,000+ palettes, try each palette live on the site, and unlock color copying with a quick 30-second ad.",
+  keywords: ["color palettes", "color generator", "hex colors", "design", "ui colors", "10000 palettes"],
+  authors: [{ name: "البشمهندس محمود مصطفى" }],
+  openGraph: {
+    type: "website",
+    siteName: "ColorFlow",
+    title: "ColorFlow — 10,000+ Curated Color Palettes",
+    description: "10,000+ palettes and a harmony generator. Copy any color code for free.",
+  },
+  robots: { index: true, follow: true },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0d16" },
+  ],
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className="flex min-h-screen flex-col">
+        <Providers>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Providers>
+      </body>
+    </html>
+  );
+}

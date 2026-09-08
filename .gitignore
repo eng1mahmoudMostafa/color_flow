@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+build
+.env
+.env.local
+.env*.local
+.env.production
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+uploads
+*.log
+run-check.txt

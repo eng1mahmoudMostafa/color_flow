@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: colorflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: colorflow
+      POSTGRES_PASSWORD: colorflow
+      POSTGRES_DB: colorflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - colorflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U colorflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  colorflow_pgdata:

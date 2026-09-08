@@ -1,0 +1,217 @@
+// ColorFlow — Prisma schema
+// PostgreSQL + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  favorites      Favorite[]
+  customPalettes CustomPalette[]
+  accessSessions AccessSession[]
+  adSessions     AdSession[]
+
+  @@index([email])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Palette {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  category    Category
+  tags        String[]
+  featured    Boolean  @default(false)
+  trending    Boolean  @default(false)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  colors   Color[]
+  favorites Favorite[]
+
+  @@index([category])
+  @@index([slug])
+  @@index([featured])
+}
+
+enum Category {
+  CLASSIC
+  MINIMAL
+  DARK
+  LIGHT
+  LUXURY
+  NATURE
+  OCEAN
+  SUNSET
+  PASTEL
+  NEON
+  TECHNOLOGY
+  GAMING
+  BUSINESS
+  ECOMMERCE
+  PORTFOLIO
+  FINANCE
+  MEDICAL
+  EDUCATION
+}
+
+model Color {
+  id        String  @id @default(cuid())
+  paletteId String
+  name      String
+  hex       String
+  rgb       String
+  hsl       String
+  cmyk      String
+  position  Int
+
+  palette   Palette @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  favorites Favorite[]
+
+  @@index([paletteId, position])
+  @@index([hex])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  paletteId String?
+  colorId   String?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  palette Palette? @relation(fields: [paletteId], references: [id], onDelete: Cascade)
+  color   Color?  @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, paletteId, colorId])
+  @@index([userId])
+}
+
+/// 24-hour copy access. Server-side source of truth. Never trust client state.
+model AccessSession {
+  id           String   @id @default(cuid())
+  userId       String?
+  sessionToken String
+  grantedAt    DateTime @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionToken])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Rewarded-ad session lifecycle, delegated to the configured AdProvider.
+model AdSession {
+  id                String          @id @default(cuid())
+  userId            String?
+  sessionToken      String
+  provider          String
+  startedAt         DateTime        @default(now())
+  completedAt       DateTime?
+  verificationStatus AdVerification @default(PENDING)
+  attempts          Int             @default(0)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionToken])
+  @@index([verificationStatus])
+}
+
+/// Advertiser creatives uploaded by the admin, shown inside the rewarded-ad modal.
+/// Each ad expires (auto-deleted) after `expiresAt` (30 days by default).
+/// The site-owner's permanent ad (with the WhatsApp number) has `permanent = true`
+/// and `expiresAt = null` so it is never auto-deleted.
+model Advertisement {
+  id              String    @id @default(cuid())
+  title           String
+  message         String    @default("")
+  mediaUrl        String
+  mediaType       MediaType @default(IMAGE)
+  linkUrl         String?
+  durationSeconds Int       @default(30)
+  slot            Int       @default(1)
+  active          Boolean   @default(true)
+  permanent       Boolean   @default(false)
+  expiresAt       DateTime?
+  impressions     Int       @default(0)
+  clicks          Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([active])
+  @@index([active, slot])
+  @@index([expiresAt])
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum AdVerification {
+  PENDING
+  VERIFIED
+  FAILED
+  EXPIRED
+}
+
+model CustomPalette {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String   @default("")
+  tags        String[]
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  colors  PaletteColor[]
+
+  @@index([userId])
+}
+
+model PaletteColor {
+  id              String @id @default(cuid())
+  customPaletteId String
+  name            String
+  hex             String
+  position        Int
+
+  customPalette CustomPalette @relation(fields: [customPaletteId], references: [id], onDelete: Cascade)
+
+  @@index([customPaletteId, position])
+}
+
+/// Anonymous aggregate analytics events only. No personal data.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  type      String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}

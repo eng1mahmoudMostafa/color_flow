@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: 255 255 255;
+  --surface-raised: 250 250 252;
+  --ink: 15 20 34;
+  --ink-soft: 71 78 98;
+  --ink-faint: 120 127 148;
+  --line: 228 231 239;
+}
+
+.dark {
+  --surface: 10 13 22;
+  --surface-raised: 17 21 33;
+  --ink: 237 240 247;
+  --ink-soft: 168 175 195;
+  --ink-faint: 122 130 152;
+  --line: 38 44 60;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-surface text-ink antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Visible focus states for keyboard navigation (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid #3b6df6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: rgb(59 109 246 / 0.25);
+}
+
+/* Slim, quiet scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line)) transparent;
+}
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
