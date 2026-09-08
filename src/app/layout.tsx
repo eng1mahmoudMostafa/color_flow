@@ -4,7 +4,9 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://colorflow.example.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() && process.env.NEXT_PUBLIC_SITE_URL !== "undefined"
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : "https://colorflow.example.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
