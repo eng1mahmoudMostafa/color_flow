@@ -5,7 +5,7 @@ import { CATEGORY_META } from "@/lib/data/palettes";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://colorflow.example.com";
+  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.URL || "https://colorflow.example.com";
 
   const staticRoutes = ["", "/explore", "/categories", "/generator", "/favorites"].map((path) => ({
     url: `${base}${path}`,

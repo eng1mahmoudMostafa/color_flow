@@ -5,9 +5,13 @@ import { Footer } from "@/components/footer";
 import "./globals.css";
 
 const rawSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
-const siteUrl = rawSiteUrl && rawSiteUrl !== "undefined" && rawSiteUrl.startsWith("http")
-  ? rawSiteUrl
-  : "https://colorflow.example.com";
+const netlifyUrl = (process.env.URL || "").trim(); // injected automatically by Netlify at build time
+const siteUrl =
+  rawSiteUrl && rawSiteUrl !== "undefined" && rawSiteUrl.startsWith("http")
+    ? rawSiteUrl
+    : netlifyUrl && netlifyUrl.startsWith("http")
+      ? netlifyUrl
+      : "https://colorflow.example.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
