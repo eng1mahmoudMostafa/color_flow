@@ -26,6 +26,7 @@ export default function AdminDashboard() {
   const [notice, setNotice] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [diag, setDiag] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ title: "", message: "", mediaUrl: "", mediaType: "image" as "image" | "video", linkUrl: "", durationSeconds: 30, slot: 1, active: true });
@@ -62,26 +63,49 @@ export default function AdminDashboard() {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return; setUploading(true);
+    const file = e.target.files?.[0]; if (!file) return; setUploading(true); setDiag(null);
+    const stamp = (s: string) => setDiag((d) => (d ? d + " → " + s : s));
     try {
-      // Upload straight from the browser to cloud storage.
-      // Uses FormData (local dev, disk storage) or direct-to-Blob (live site).
-      const fdCheck = await fetch("/api/admin/blob-check").catch(() => null);
-      const blobMode = Boolean(fdCheck && fdCheck.ok && (await fdCheck.json().catch(() => null))?.blob);
+      stamp(`file picked: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB, ${file.type || "unknown type"})`);
+      // Step 1 — ask the server which upload mode is available.
+      let blobMode = false;
+      try {
+        stamp("checking /api/admin/blob-check …");
+        const fdCheck = await fetch("/api/admin/blob-check");
+        const raw = await fdCheck.text();
+        stamp(`blob-check: HTTP ${fdCheck.status}`);
+        if (!fdCheck.ok) throw new Error(`blob-check HTTP ${fdCheck.status}: ${raw.slice(0, 120)}`);
+        const parsed = JSON.parse(raw);
+        blobMode = Boolean(parsed?.data?.blob ?? parsed?.blob);
+        stamp(`blob mode: ${blobMode ? "ON (direct-to-cloud)" : "OFF (local disk)"}`);
+      } catch (err: any) {
+        throw new Error(`Cannot reach upload service (${err.message || "network error"}). Are you still logged in as admin?`);
+      }
       if (blobMode) {
+        stamp("requesting upload token …");
         const ext = (file.name.split(".").pop() || "bin").toLowerCase();
-        const blob = await upload(`ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, file, {
-          access: "public",
-          handleUploadUrl: "/api/admin/ads/blob-token",
-        });
+        let blob;
+        try {
+          blob = await upload(`ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, file, {
+            access: "public",
+            handleUploadUrl: "/api/admin/ads/blob-token",
+          });
+        } catch (err: any) {
+          throw new Error(`Cloud upload failed (${err.message || "unknown error"}). Is Blob storage connected in Vercel → Storage?`);
+        }
+        stamp(`uploaded to cloud: ${blob.url.slice(0, 60)}…`);
         setForm((f) => ({ ...f, mediaUrl: blob.url, mediaType: (file.type.startsWith("video") ? "video" : "image") as "image" | "video" }));
       } else {
+        stamp("uploading via server …");
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch("/api/admin/ads/upload", { method: "POST", body: fd });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error?.message || json?.error || "Upload failed");
+        const raw = await res.text();
+        let json: any = null;
+        try { json = JSON.parse(raw); } catch { /* non-JSON error page */ }
+        if (!res.ok) throw new Error(json?.error?.message || json?.error || `Upload failed (HTTP ${res.status}): ${raw.slice(0, 120)}`);
         const uploaded = json.file || json.data?.file || {};
+        stamp("server upload OK");
         setForm((f) => ({ ...f, mediaUrl: uploaded.mediaUrl || f.mediaUrl, mediaType: (uploaded.mediaType || (file.type.startsWith("video") ? "video" : "image")).toLowerCase() }));
       }
       showNotice("ok", "Media uploaded");
@@ -185,6 +209,7 @@ export default function AdminDashboard() {
                 {form.mediaUrl && <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">{form.mediaType?.toLowerCase() === "video" ? <Eye size={16} /> : <ImageIcon size={16} />}<span className="truncate max-w-[200px]">{form.mediaUrl.split("/").pop()}</span></div>}
               </div>
               <p className="mt-1 text-[11px] text-muted-foreground">Tip: upload a free image to Imgur / Catbox / Cloudinary, then paste its direct link here — this is the reliable way on the live site.</p>
+              {diag && <p className="mt-1 text-[11px] font-mono break-all rounded bg-muted p-2 text-muted-foreground">Debug: {diag}</p>}
             </div>              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />Active</label>
               <div className="flex gap-2"><button type="submit" className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90">{editingId ? "Update" : "Create"}</button><button type="button" onClick={resetForm} className="px-4 py-2 rounded-lg border hover:bg-muted">Cancel</button></div>
             </form>
