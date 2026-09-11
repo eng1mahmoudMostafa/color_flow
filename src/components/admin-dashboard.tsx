@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { upload } from "@vercel/blob/client";
 import { Upload, X, Trash2, Eye, Plus, Image as ImageIcon, Edit2, Play } from "lucide-react";
 import { AdModal } from "@/components/ad-modal";
 
@@ -63,13 +64,26 @@ export default function AdminDashboard() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return; setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/ads/upload", { method: "POST", body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error?.message || json?.error || "Upload failed");
-      const uploaded = json.file || json.data?.file || {};
-      setForm((f) => ({ ...f, mediaUrl: uploaded.mediaUrl || f.mediaUrl, mediaType: (uploaded.mediaType || (file.type.startsWith("video") ? "video" : "image")).toLowerCase() }));
+      // Upload straight from the browser to cloud storage.
+      // Uses FormData (local dev, disk storage) or direct-to-Blob (live site).
+      const fdCheck = await fetch("/api/admin/blob-check").catch(() => null);
+      const blobMode = Boolean(fdCheck && fdCheck.ok && (await fdCheck.json().catch(() => null))?.blob);
+      if (blobMode) {
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+        const blob = await upload(`ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/admin/ads/blob-token",
+        });
+        setForm((f) => ({ ...f, mediaUrl: blob.url, mediaType: (file.type.startsWith("video") ? "video" : "image") as "image" | "video" }));
+      } else {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/admin/ads/upload", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error?.message || json?.error || "Upload failed");
+        const uploaded = json.file || json.data?.file || {};
+        setForm((f) => ({ ...f, mediaUrl: uploaded.mediaUrl || f.mediaUrl, mediaType: (uploaded.mediaType || (file.type.startsWith("video") ? "video" : "image")).toLowerCase() }));
+      }
       showNotice("ok", "Media uploaded");
     } catch (err: any) { showNotice("err", err.message || "Upload failed"); }
     finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
