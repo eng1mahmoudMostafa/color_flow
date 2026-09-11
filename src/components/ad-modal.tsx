@@ -205,10 +205,14 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
                     onClick={handleAdClick}
                   >
                     {currentAd.mediaType === "VIDEO" ? (
-                      <video src={currentAd.mediaUrl} className="w-full h-48 object-contain bg-black" autoPlay muted={muted} playsInline onEnded={() => setVideoEnded(true)} onError={() => setVideoEnded(true)} />
+                      <video key={currentAd.id} src={currentAd.mediaUrl} className="w-full h-48 object-contain bg-black" autoPlay muted={muted} playsInline preload="auto" onEnded={() => setVideoEnded(true)} onError={() => setVideoEnded(true)} />
                     ) : (
-                      <img src={currentAd.mediaUrl} alt={currentAd.title} className="w-full h-48 object-contain" />
+                      <img key={currentAd.id} src={currentAd.mediaUrl} alt={currentAd.title} className="w-full h-48 object-contain" onError={(e) => { (e.currentTarget.parentElement as HTMLElement | null)?.querySelector("[data-ad-fallback]")?.removeAttribute("hidden"); e.currentTarget.style.display = "none"; }} />
                     )}
+                    <div data-ad-fallback hidden className="w-full p-6 text-center bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+                      <p className="text-lg font-bold">📢 {currentAd.title}</p>
+                      {currentAd.message && <p className="mt-1 text-sm opacity-90">{currentAd.message}</p>}
+                    </div>
                     {currentAd.linkUrl && (
                       <div className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full">
                         <ExternalLink className="w-4 h-4" />

@@ -24,6 +24,11 @@ export function blobEnabled(): boolean {
   return Boolean(blobToken());
 }
 
+/** Current upload mode: "blob" on Vercel with a store connected, otherwise "disk". */
+export function uploadMode(): "blob" | "disk" {
+  return blobEnabled() ? "blob" : "disk";
+}
+
 const CONTENT_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",

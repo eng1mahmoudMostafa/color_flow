@@ -26,6 +26,7 @@ export default function AdminDashboard() {
   const [notice, setNotice] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [diag, setDiag] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,29 +85,28 @@ export default function AdminDashboard() {
       if (blobMode) {
         stamp("requesting upload token …");
         const ext = (file.name.split(".").pop() || "bin").toLowerCase();
-        let blob;
+        let blobUrl: string;
         try {
-          blob = await upload(`ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, file, {
+          const blob = await upload(`ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, file, {
             access: "public",
             handleUploadUrl: "/api/admin/ads/blob-token",
           });
+          blobUrl = blob.url;
         } catch (err: any) {
-          throw new Error(`Cloud upload failed (${err.message || "unknown error"}). Is Blob storage connected in Vercel → Storage?`);
+          throw new Error(`Cloud upload failed (${err.message || "unknown error"}). In Vercel: Storage → connect a Blob store to this project → Redeploy, then try again.`);
         }
-        stamp(`uploaded to cloud: ${blob.url.slice(0, 60)}…`);
-        setForm((f) => ({ ...f, mediaUrl: blob.url, mediaType: (file.type.startsWith("video") ? "video" : "image") as "image" | "video" }));
+        stamp(`uploaded to cloud: ${blobUrl.slice(0, 60)}…`);
+        // Double-check the Blob store kept the file (ephemeral disk loses files on redeploy).
+        try {
+          const probe = await fetch(blobUrl, { method: "HEAD" });
+          stamp(`cloud file check: HTTP ${probe.status}`);
+          if (!probe.ok) throw new Error(`cloud file not reachable (HTTP ${probe.status})`);
+        } catch (err: any) {
+          throw new Error(`Upload vanished after saving (${err.message || "unreachable"}). The Blob store may be disconnected — check Vercel → Storage.`);
+        }
+        setForm((f) => ({ ...f, mediaUrl: blobUrl, mediaType: (file.type.startsWith("video") ? "video" : "image") as "image" | "video" }));
       } else {
-        stamp("uploading via server …");
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch("/api/admin/ads/upload", { method: "POST", body: fd });
-        const raw = await res.text();
-        let json: any = null;
-        try { json = JSON.parse(raw); } catch { /* non-JSON error page */ }
-        if (!res.ok) throw new Error(json?.error?.message || json?.error || `Upload failed (HTTP ${res.status}): ${raw.slice(0, 120)}`);
-        const uploaded = json.file || json.data?.file || {};
-        stamp("server upload OK");
-        setForm((f) => ({ ...f, mediaUrl: uploaded.mediaUrl || f.mediaUrl, mediaType: (uploaded.mediaType || (file.type.startsWith("video") ? "video" : "image")).toLowerCase() }));
+        throw new Error("Cloud storage is not connected on the live site (uploads/ is wiped on every deploy). In Vercel: Storage → Create Blob store → Connect to this project → Redeploy. Until then, paste an external image/video URL in the field below instead of uploading.");
       }
       showNotice("ok", "Media uploaded");
     } catch (err: any) { showNotice("err", err.message || "Upload failed"); }
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
     if (!confirm(`Delete "${ad.title}"? This will also delete its media file.`)) return;
     try {
       const res = await fetch(`/api/admin/ads/${ad.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed");
+      const rawDel = await res.text(); let delJson = null; try { delJson = JSON.parse(rawDel); } catch {} const delMsg = (delJson && delJson.error && (delJson.error.message || delJson.error)) || rawDel.slice(0, 200) || "HTTP " + res.status; if (!res.ok || (delJson && delJson.ok === false)) { throw new Error(typeof delMsg === "string" ? delMsg : "Delete failed"); }
       showNotice("ok", "Ad deleted"); loadData();
     } catch { showNotice("err", "Delete failed"); }
   };
@@ -212,6 +212,7 @@ export default function AdminDashboard() {
               {diag && <p className="mt-1 text-[11px] font-mono break-all rounded bg-muted p-2 text-muted-foreground">Debug: {diag}</p>}
             </div>              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />Active</label>
               <div className="flex gap-2"><button type="submit" className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90">{editingId ? "Update" : "Create"}</button><button type="button" onClick={resetForm} className="px-4 py-2 rounded-lg border hover:bg-muted">Cancel</button></div>
+              {submitError && <p className="text-sm text-red-600 dark:text-red-400">⚠ {submitError}</p>}
             </form>
           </motion.div>
         )}
