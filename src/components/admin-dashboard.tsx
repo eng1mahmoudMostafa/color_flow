@@ -52,6 +52,14 @@ export default function AdminDashboard() {
 
   const resetForm = () => { setForm({ title: "", message: "", mediaUrl: "", mediaType: "image", linkUrl: "", durationSeconds: 30, slot: 1, active: true }); setEditingId(null); setShowForm(false); };
 
+  /** Paste an external image/video URL — auto-detect the type from the extension. */
+  const setMediaUrlInput = (url: string) => {
+    const clean = url.trim();
+    const lower = clean.toLowerCase().split("?")[0];
+    const isVideo = /\.(mp4|webm|mov)(\/|$)/.test(lower) || lower.includes("video");
+    setForm((f) => ({ ...f, mediaUrl: clean, mediaType: isVideo ? "video" : "image" }));
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return; setUploading(true);
     try {
@@ -152,7 +160,18 @@ export default function AdminDashboard() {
                 <div><label className="text-xs text-muted-foreground">Duration (10-120s)</label><input type="number" min={10} max={120} value={form.durationSeconds} onChange={(e) => setForm({ ...form, durationSeconds: Number(e.target.value) })} className="w-full rounded-lg border px-3 py-2 bg-transparent" /></div>
                 <div><label className="text-xs text-muted-foreground">Click Link (optional)</label><input type="text" placeholder="https://example.com" value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} className="w-full rounded-lg border px-3 py-2 bg-transparent" /></div>
               </div>
-              <div><label className="text-xs text-muted-foreground block mb-1">Media (image or video)</label><div className="flex items-center gap-3"><input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileUpload} className="hidden" /><button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted disabled:opacity-50"><Upload size={16} /> {uploading ? "Uploading…" : "Upload"}</button>{form.mediaUrl && <div className="flex items-center gap-2 text-sm text-muted-foreground">{form.mediaType?.toLowerCase() === "video" ? <Eye size={16} /> : <ImageIcon size={16} />}<span className="truncate max-w-[200px]">{form.mediaUrl.split("/").pop()}</span></div>}</div></div>              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />Active</label>
+              <div>
+              <label className="text-xs text-muted-foreground block mb-1">Media — external URL only on the live site (serverless hosting deletes uploaded files)</label>
+              <div className="flex items-center gap-3">
+                <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted disabled:opacity-50">
+                  <Upload size={16} /> {uploading ? "Uploading…" : "Upload"}
+                </button>
+                <input type="text" placeholder="…or paste image/video URL: https://…" value={/^https?:\/\//i.test(form.mediaUrl) ? form.mediaUrl : ""} onChange={(e) => setMediaUrlInput(e.target.value)} className="flex-1 min-w-0 rounded-lg border px-3 py-2 bg-transparent" />
+                {form.mediaUrl && <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">{form.mediaType?.toLowerCase() === "video" ? <Eye size={16} /> : <ImageIcon size={16} />}<span className="truncate max-w-[200px]">{form.mediaUrl.split("/").pop()}</span></div>}
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Tip: upload a free image to Imgur / Catbox / Cloudinary, then paste its direct link here — this is the reliable way on the live site.</p>
+            </div>              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />Active</label>
               <div className="flex gap-2"><button type="submit" className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90">{editingId ? "Update" : "Create"}</button><button type="button" onClick={resetForm} className="px-4 py-2 rounded-lg border hover:bg-muted">Cancel</button></div>
             </form>
           </motion.div>
