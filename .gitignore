@@ -12,3 +12,4 @@ next-env.d.ts
 uploads
 *.log
 run-check.txt
+prisma/seed.sql
