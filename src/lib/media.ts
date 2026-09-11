@@ -11,6 +11,19 @@ export class MediaError extends Error {}
 export const ALLOWED_IMAGE = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
 export const ALLOWED_VIDEO = [".mp4", ".webm", ".mov"];
 
+/** Vercel Blob token — when set, uploads go to persistent Blob storage instead of the ephemeral disk. */
+function blobToken(): string | null {
+  const t =
+    process.env.BLOB_READ_WRITE_TOKEN ||
+    process.env.VERCEL_BLOB_READ_WRITE_TOKEN ||
+    "";
+  return t.trim() ? t.trim() : null;
+}
+
+export function blobEnabled(): boolean {
+  return Boolean(blobToken());
+}
+
 const CONTENT_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -28,6 +41,11 @@ export function isLocalMediaUrl(url: string): boolean {
   return /^\/ads-media\//.test(url);
 }
 
+/** Is this a Vercel Blob URL (public.blob.vercel-storage.com)? */
+export function isBlobMediaUrl(url: string): boolean {
+  return /^https:\/\/[^/]*\.public\.blob\.vercel-storage\.com\//i.test(url.trim());
+}
+
 /** Resolve an internal media URL to an absolute file path (returns null if outside uploads). */
 export function mediaPathFromUrl(url: string): string | null {
   if (!isLocalMediaUrl(url)) return null;
@@ -36,8 +54,19 @@ export function mediaPathFromUrl(url: string): string | null {
   return join(UPLOAD_DIR, filename);
 }
 
-/** Delete the local file backing a media URL, if it is internally hosted. */
+/** Delete the media backing a URL: local disk file or Vercel Blob object. */
 export async function deleteMediaFile(mediaUrl: string): Promise<void> {
+  if (isBlobMediaUrl(mediaUrl)) {
+    const token = blobToken();
+    if (!token) return;
+    try {
+      const { del } = await import("@vercel/blob");
+      await del(mediaUrl, { token });
+    } catch {
+      /* best effort */
+    }
+    return;
+  }
   const path = mediaPathFromUrl(mediaUrl);
   if (!path || !existsSync(path)) return;
   try {
@@ -61,7 +90,12 @@ export async function storageUsage(): Promise<number> {
   return total;
 }
 
-/** Persist an uploaded file to local storage and return its site URL. */
+/**
+ * Persist an uploaded file and return its site URL.
+ * - Local dev (no BLOB token): saves to uploads/ads on disk, returns /ads-media/...
+ * - Production on Vercel (BLOB_READ_WRITE_TOKEN set): uploads to Vercel Blob
+ *   (persistent), returns the public Blob URL.
+ */
 export async function saveUploadedFile(file: File): Promise<{ mediaUrl: string; mediaType: "IMAGE" | "VIDEO"; filename: string }> {
   const ext = extname(file.name).toLowerCase();
   const allowed = [...ALLOWED_IMAGE, ...ALLOWED_VIDEO];
@@ -70,6 +104,33 @@ export async function saveUploadedFile(file: File): Promise<{ mediaUrl: string; 
   const maxFileBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
   if (file.size > maxFileBytes) {
     throw new MediaError(`File too large (max ${Math.round(maxFileBytes / 1024 / 1024)} MB for ${isVideo ? "video" : "images"}).`);
+  }
+
+  const token = blobToken();
+  if (token) {
+    // Persistent cloud storage (survives redeploys). Enforce quota via Blob listing.
+    const { put, list } = await import("@vercel/blob");
+    try {
+      let used = 0;
+      let cursor: string | undefined;
+      do {
+        const page: { blobs: { size: number }[]; cursor?: string } = await list({ token, cursor });
+        for (const b of page.blobs) used += b.size ?? 0;
+        cursor = page.cursor;
+      } while (cursor);
+      if (used + file.size > MAX_TOTAL_BYTES) {
+        throw new MediaError(
+          `Storage limit reached (${Math.round(MAX_TOTAL_BYTES / 1024 / 1024)} MB). Delete some older ads first.`
+        );
+      }
+    } catch (err) {
+      if (err instanceof MediaError) throw err;
+      /* listing failed — proceed with upload anyway */
+    }
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
+    const contentType = CONTENT_TYPES[ext] ?? (isVideo ? "video/mp4" : "image/jpeg");
+    const blob = await put(`ads/${filename}`, file, { access: "public", contentType, token });
+    return { mediaUrl: blob.url, mediaType: isVideo ? "VIDEO" : "IMAGE", filename };
   }
 
   // Enforce the total storage quota so free hosting never fills up.

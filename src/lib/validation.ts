@@ -33,7 +33,7 @@ export const adminAdSchema = z.object({
   mediaUrl: z
     .string()
     .trim()
-    .max(1000)
+    .max(2000)
     .refine((v) => /^https?:\/\//i.test(v) || /^\/ads-media\//.test(v), {
       message: "Enter a full external URL (https://) or an uploaded local file (/ads-media/...).",
     }),
