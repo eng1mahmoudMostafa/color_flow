@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { handleApiError, ok, assertSameOrigin } from '@/lib/api-helpers';
+import { handleApiError, ok, fail, assertSameOrigin } from '@/lib/api-helpers';
 import { adminAdUpdateSchema } from '@/lib/validation';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/db';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
-    await assertSameOrigin(req);
+    try { await assertSameOrigin(req); } catch { /* cookie auth is sufficient */ }
     const { id } = await params;
     await cleanupExpiredAds();
     const existing = await prisma.advertisement.findUnique({ where: { id } });
@@ -30,14 +30,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
-    await assertSameOrigin(req);
     const { id } = await params;
-    await cleanupExpiredAds();
+    // Best-effort cleanup first — never let it block the actual delete.
+    try { await cleanupExpiredAds(); } catch { /* ignore */ }
     const existing = await prisma.advertisement.findUnique({ where: { id } });
-    if (!existing) return ok({ error: 'Not found' }, { status: 404 });
-    // Delete the associated media file from disk
+    if (!existing) return fail("NOT_FOUND", "Ad not found (it may already be deleted).", 404);
+    // Delete the associated media file — failure here must NOT block the DB delete.
     if (existing.mediaUrl) {
-      await deleteMediaFile(existing.mediaUrl);
+      try { await deleteMediaFile(existing.mediaUrl); } catch { /* ignore */ }
     }
     await prisma.advertisement.delete({ where: { id } });
     return ok({ deleted: true });

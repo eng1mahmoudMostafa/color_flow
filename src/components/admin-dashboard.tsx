@@ -129,9 +129,25 @@ export default function AdminDashboard() {
     if (!confirm(`Delete "${ad.title}"? This will also delete its media file.`)) return;
     try {
       const res = await fetch(`/api/admin/ads/${ad.id}`, { method: "DELETE" });
-      const rawDel = await res.text(); let delJson = null; try { delJson = JSON.parse(rawDel); } catch {} const delMsg = (delJson && delJson.error && (delJson.error.message || delJson.error)) || rawDel.slice(0, 200) || "HTTP " + res.status; if (!res.ok || (delJson && delJson.ok === false)) { throw new Error(typeof delMsg === "string" ? delMsg : "Delete failed"); }
-      showNotice("ok", "Ad deleted"); loadData();
-    } catch { showNotice("err", "Delete failed"); }
+      let raw = "";
+      try { raw = await res.text(); } catch { raw = ""; }
+      let finalRaw = raw; let finalStatus = res.status; let finalOk = res.ok;
+      if (!res.ok && (res.status === 401 || res.status === 403)) {
+        try {
+          const retry = await fetch(`/api/admin/ads/${ad.id}?t=${Date.now()}`, { method: "DELETE", cache: "no-store" });
+          finalRaw = await retry.text().catch(() => ""); finalStatus = retry.status; finalOk = retry.ok;
+        } catch { /* keep original */ }
+      }
+      let dJson = null;
+      try { dJson = finalRaw ? JSON.parse(finalRaw) : null; } catch { /* HTML page */ }
+      const srvMsg = (dJson && dJson.error && (dJson.error.message || dJson.error)) || (dJson && dJson.data && typeof dJson.data.error === "string" ? dJson.data.error : null);
+      if (!finalOk || (dJson && dJson.ok === false)) {
+        const m = (typeof srvMsg === "string" && srvMsg ? srvMsg : null) || (finalRaw ? finalRaw.slice(0, 200) : "HTTP " + finalStatus);
+        throw new Error(typeof m === "string" ? m : "Delete failed");
+      }
+      showNotice("ok", "Ad deleted");
+      loadData();
+    } catch (err) { showNotice("err", (err as Error).message || "Delete failed"); }
   };
 
   const slotAds = Array.from({ length: TOTAL_SLOTS }, (_, i) => ads.find((a) => a.slot === i + 1)).filter(Boolean) as Ad[];
