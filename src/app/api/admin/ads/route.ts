@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError, ok, assertSameOrigin } from '@/lib/api-helpers';
 import { adminAdSchema } from '@/lib/validation';
 import { requireAdmin } from '@/lib/auth';
@@ -43,6 +43,15 @@ export async function POST(req: NextRequest) {
     await requireAdmin();
     await assertSameOrigin(req);
     const body = adminAdSchema.parse(await req.json());
+    // A slot holds exactly one ad — reject creating into an occupied slot
+    // (prevents two ads stacking in one slot and the "delete didn't work" confusion).
+    const occupant = await prisma.advertisement.findFirst({ where: { slot: body.slot } });
+    if (occupant) {
+      return NextResponse.json(
+        { ok: false, error: { code: "SLOT_OCCUPIED", message: `Slot ${body.slot} is already occupied by "${occupant.title}". Delete it first or choose another slot (1-3).` } },
+        { status: 409 }
+      );
+    }
     const ad = await prisma.advertisement.create({
       data: {
         title: body.title,
