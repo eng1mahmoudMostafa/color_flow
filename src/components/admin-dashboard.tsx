@@ -31,10 +31,12 @@ export default function AdminDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ title: "", message: "", mediaUrl: "", mediaType: "image" as "image" | "video", linkUrl: "", durationSeconds: 30, slot: 1, active: true });
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (attempt = 0) => {
     try {
-      const [adsRes, statsRes] = await Promise.all([fetch("/api/admin/ads"), fetch("/api/admin/stats")]);
+      const [adsRes, statsRes] = await Promise.all([fetch("/api/admin/ads", { cache: "no-store" }), fetch("/api/admin/stats", { cache: "no-store" })]);
+      let anyOk = false;
       if (adsRes.ok) {
+        anyOk = true;
         const j = await adsRes.json();
         const list = j?.data?.ads ?? j?.ads ?? [];
         setAds(Array.isArray(list) ? list : []);
@@ -42,11 +44,18 @@ export default function AdminDashboard() {
         if (st) setStorage(st);
       }
       if (statsRes.ok) {
+        anyOk = true;
         const j = await statsRes.json();
         setStats(j?.data ?? j ?? null);
       }
-    } catch { showNotice("err", "Failed to load data"); }
-    finally { setLoading(false); }
+      if (!anyOk && attempt < 3) { setTimeout(() => loadData(attempt + 1), 900); return; }
+      if (!anyOk) showNotice("err", `Failed to load data (ads=${adsRes.status}, stats=${statsRes.status}) — will retry on next action`);
+    } catch {
+      if (attempt < 3) { setTimeout(() => loadData(attempt + 1), 900); return; }
+      showNotice("err", "Failed to load data — check your connection");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -127,8 +136,12 @@ export default function AdminDashboard() {
 
   const handleDelete = async (ad: Ad) => {
     if (!confirm(`Delete "${ad.title}"? This will also delete its media file.`)) return;
+    // Optimistic removal - the row vanishes the instant the server confirms,
+    // regardless of whether the follow-up refetch succeeds.
+    const before = ads;
+    setAds((prev) => prev.filter((a) => a.id !== ad.id));
     try {
-      const res = await fetch(`/api/admin/ads/${ad.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/ads/${ad.id}`, { method: "DELETE", cache: "no-store" });
       let raw = "";
       try { raw = await res.text(); } catch { raw = ""; }
       let finalRaw = raw; let finalStatus = res.status; let finalOk = res.ok;
@@ -142,12 +155,16 @@ export default function AdminDashboard() {
       try { dJson = finalRaw ? JSON.parse(finalRaw) : null; } catch { /* HTML page */ }
       const srvMsg = (dJson && dJson.error && (dJson.error.message || dJson.error)) || (dJson && dJson.data && typeof dJson.data.error === "string" ? dJson.data.error : null);
       if (!finalOk || (dJson && dJson.ok === false)) {
+        setAds(before);
         const m = (typeof srvMsg === "string" && srvMsg ? srvMsg : null) || (finalRaw ? finalRaw.slice(0, 200) : "HTTP " + finalStatus);
         throw new Error(typeof m === "string" ? m : "Delete failed");
       }
       showNotice("ok", "Ad deleted");
-      loadData();
-    } catch (err) { showNotice("err", (err as Error).message || "Delete failed"); }
+      loadData(); // silent refetch - auto-retries, never masks a successful delete
+    } catch (err) {
+      setAds(before);
+      showNotice("err", (err as Error).message || "Delete failed");
+    }
   };
 
   const slotAds = Array.from({ length: TOTAL_SLOTS }, (_, i) => ads.find((a) => a.slot === i + 1)).filter(Boolean) as Ad[];
