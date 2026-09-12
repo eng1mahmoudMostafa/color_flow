@@ -1,8 +1,0 @@
-﻿LOGIN=200
-COOKIE_NAMES=cf_auth
-LIST_OK count=1
-  AD id= title='' slot= active=
-CREATE_OK id=
-DELETE_FAILED=308
-VERIFY=DELETED_OK
-  REMAINS id= title=''
