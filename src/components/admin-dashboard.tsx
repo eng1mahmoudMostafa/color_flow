@@ -31,6 +31,26 @@ export default function AdminDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ title: "", message: "", mediaUrl: "", mediaType: "image" as "image" | "video", linkUrl: "", durationSeconds: 30, slot: 1, active: true });
+
+  /**
+   * Fetch with automatic retries for transient network drops ("Failed to fetch").
+   * Flaky connections to the deployed backend made single-shot writes appear
+   * failed even when they landed — retrying transparently removes that.
+   */
+  const fetchWithRetry = async (input: string, init: RequestInit, attempts = 3): Promise<Response> => {
+    let lastErr: unknown = null;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fetch(input, { ...init, cache: "no-store" });
+      } catch (err) {
+        lastErr = err;
+        await new Promise((r) => setTimeout(r, 700 * (i + 1)));
+      }
+    }
+    throw lastErr;
+  };
+
+  const isNetworkError = (err: unknown) => err instanceof TypeError;
   const loadData = useCallback(async (attempt = 0) => {
     try {
       // Independent fetches: a slow/failing stats endpoint must never mask a
@@ -126,13 +146,21 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); try {
-      const res = await fetch(editingId ? `/api/admin/ads/${editingId}` : "/api/admin/ads", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, mediaType: form.mediaType.toUpperCase(), linkUrl: form.linkUrl || null }) });
+      const res = await fetchWithRetry(editingId ? `/api/admin/ads/${editingId}` : "/api/admin/ads", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, mediaType: form.mediaType.toUpperCase(), linkUrl: form.linkUrl || null }) });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         throw new Error(j?.error?.message || j?.error || `Failed (${res.status})`);
       }
       showNotice("ok", editingId ? "Ad updated" : "Ad created"); resetForm(); loadData();
-    } catch (err: any) { showNotice("err", err.message); }
+    } catch (err) {
+      if (isNetworkError(err)) {
+        // The write may or may not have landed — the refetched table shows the truth.
+        showNotice("err", "Connection dropped. The list below was refreshed to show the actual current state — try again if needed.");
+        loadData();
+      } else {
+        showNotice("err", (err as Error).message || "Request failed");
+      }
+    }
   };
   const handleEdit = (ad: Ad) => { setForm({ title: ad.title, message: ad.message, mediaUrl: ad.mediaUrl, mediaType: ad.mediaType, linkUrl: ad.linkUrl || "", durationSeconds: ad.durationSeconds, slot: ad.slot, active: ad.active }); setEditingId(ad.id); setShowForm(true); };
 
@@ -143,13 +171,13 @@ export default function AdminDashboard() {
     const before = ads;
     setAds((prev) => prev.filter((a) => a.id !== ad.id));
     try {
-      const res = await fetch(`/api/admin/ads/${ad.id}`, { method: "DELETE", cache: "no-store" });
+      const res = await fetchWithRetry(`/api/admin/ads/${ad.id}`, { method: "DELETE" });
       let raw = "";
       try { raw = await res.text(); } catch { raw = ""; }
       let finalRaw = raw; let finalStatus = res.status; let finalOk = res.ok;
       if (!res.ok && (res.status === 401 || res.status === 403)) {
         try {
-          const retry = await fetch(`/api/admin/ads/${ad.id}?t=${Date.now()}`, { method: "DELETE", cache: "no-store" });
+          const retry = await fetchWithRetry(`/api/admin/ads/${ad.id}?t=${Date.now()}`, { method: "DELETE" });
           finalRaw = await retry.text().catch(() => ""); finalStatus = retry.status; finalOk = retry.ok;
         } catch { /* keep original */ }
       }
@@ -165,7 +193,14 @@ export default function AdminDashboard() {
       loadData();
     } catch (err) {
       setAds(before);
-      showNotice("err", (err as Error).message || "Delete failed");
+      if (isNetworkError(err)) {
+        // The server may have deleted the ad even though the response was lost —
+        // the refetched list shows the truth instead of a scary raw error.
+        showNotice("err", "Connection dropped. The list below was refreshed to show the actual current state — try again if needed.");
+        loadData();
+      } else {
+        showNotice("err", (err as Error).message || "Delete failed");
+      }
     }
   };
 
