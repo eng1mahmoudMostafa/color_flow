@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/providers";
+import { CrashBoundary } from "@/components/crash-boundary";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import "./globals.css";
@@ -49,9 +50,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
         <Providers>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          {/* App-level recovery: a transient auto-translate DOM rewrite anywhere
+              on the page remounts the UI silently instead of showing the
+              global error page. Copy actions inside survive because the toast
+              + clipboard work already completed before the crash. */}
+          <CrashBoundary>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </CrashBoundary>
         </Providers>
       </body>
     </html>

@@ -13,13 +13,25 @@ type State = { crashed: boolean; resetKey: number };
 export class CrashBoundary extends Component<Props, State> {
   state: State = { crashed: false, resetKey: 0 };
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private rapidCrashes = 0;
+  private lastCrashAt = 0;
 
   static getDerivedStateFromError(): Partial<State> {
     return { crashed: true };
   }
 
   componentDidCatch() {
-    // Remount children once on the next tick — a fresh tree detaches from any
+    // Guard against an endless crash loop: if crashes keep firing within a
+    // second of each other, bail out of the remount cycle and render the
+    // children as-is (the browser's own recovery is the last resort).
+    const now = Date.now();
+    this.rapidCrashes = now - this.lastCrashAt < 1000 ? this.rapidCrashes + 1 : 0;
+    this.lastCrashAt = now;
+    if (this.rapidCrashes > 4) {
+      this.setState({ crashed: false });
+      return;
+    }
+    // Remount children on the next tick — a fresh tree detaches from any
     // DOM nodes the translator rewrote, instead of patching them in place.
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => {
