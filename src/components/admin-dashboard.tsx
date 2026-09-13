@@ -31,30 +31,30 @@ export default function AdminDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ title: "", message: "", mediaUrl: "", mediaType: "image" as "image" | "video", linkUrl: "", durationSeconds: 30, slot: 1, active: true });
-  const loadData = useCallback(async (attempt = 0, silent = false) => {
+  const loadData = useCallback(async (attempt = 0) => {
     try {
-      const [adsRes, statsRes] = await Promise.all([fetch("/api/admin/ads", { cache: "no-store" }), fetch("/api/admin/stats", { cache: "no-store" })]);
-      let anyOk = false;
-      if (adsRes.ok) {
-        anyOk = true;
-        const j = await adsRes.json();
+      // Independent fetches: a slow/failing stats endpoint must never mask a
+      // successful ads load (and vice versa).
+      const [adsRes, statsRes] = await Promise.allSettled([fetch("/api/admin/ads", { cache: "no-store" }), fetch("/api/admin/stats", { cache: "no-store" })]);
+      const adsOk = adsRes.status === "fulfilled" && adsRes.value.ok;
+      const statsOk = statsRes.status === "fulfilled" && statsRes.value.ok;
+      if (adsOk) {
+        const j = await adsRes.value.json();
         const list = j?.data?.ads ?? j?.ads ?? [];
         setAds(Array.isArray(list) ? list : []);
         const st = j?.data?.storage ?? j?.storage ?? null;
         if (st) setStorage(st);
       }
-      if (statsRes.ok) {
-        anyOk = true;
-        const j = await statsRes.json();
+      if (statsOk) {
+        const j = await statsRes.value.json();
         setStats(j?.data ?? j ?? null);
       }
-      if (!anyOk && attempt < 3) { setTimeout(() => loadData(attempt + 1, silent), 900); return; }
-      // Silent refetches (e.g. right after a successful delete) must never
-      // overwrite the success notice with a load error.
-      if (!anyOk && !silent) showNotice("err", `Failed to load data (ads=${adsRes.status}, stats=${statsRes.status}) — will retry on next action`);
+      if ((!adsOk || !statsOk) && attempt < 3) { setTimeout(() => loadData(attempt + 1), 900); }
+      // No error banner at all: partial data still renders, and action results
+      // (create/update/delete notices) are never overwritten by a load warning.
+      // Full failure only shows the table's empty state + loading=false.
     } catch {
-      if (attempt < 3) { setTimeout(() => loadData(attempt + 1, silent), 900); return; }
-      if (!silent) showNotice("err", "Failed to load data — check your connection");
+      if (attempt < 3) { setTimeout(() => loadData(attempt + 1), 900); return; }
     } finally {
       setLoading(false);
     }
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
         throw new Error(typeof m === "string" ? m : "Delete failed");
       }
       showNotice("ok", "Ad deleted");
-      loadData(0, true); // silent refetch - auto-retries, never masks a successful delete
+      loadData();
     } catch (err) {
       setAds(before);
       showNotice("err", (err as Error).message || "Delete failed");
