@@ -3,6 +3,7 @@ import { Providers } from "@/components/providers";
 import { CrashBoundary } from "@/components/crash-boundary";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { getLang, isRtl } from "@/lib/i18n";
 import "./globals.css";
 
 const rawSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
@@ -40,14 +41,15 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const lang = await getLang();
   return (
     // NOTE: page translation stays ENABLED (no translate="no" here).
     // Crash-safety is handled instead by:
     //  1. translate="no" only on technical code values (HEX/RGB/...) which must
     //     never be rewritten,  2. an app-level ErrorBoundary that recovers, and
     //  3. toast unmount without exit-animation DOM ops that clash with Translate.
-    <html lang="en" suppressHydrationWarning>
+    <html lang={lang} dir={isRtl(lang) ? "rtl" : "ltr"} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
         <Providers>
           {/* App-level recovery: a transient auto-translate DOM rewrite anywhere
@@ -55,9 +57,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               global error page. Copy actions inside survive because the toast
               + clipboard work already completed before the crash. */}
           <CrashBoundary>
-            <Navbar />
+            <Navbar lang={lang} />
             <main className="flex-1">{children}</main>
-            <Footer />
+            <Footer lang={lang} />
           </CrashBoundary>
         </Providers>
       </body>

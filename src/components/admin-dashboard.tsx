@@ -250,6 +250,47 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {stats && (
+        <div className="rounded-xl border p-4 space-y-4">
+          <h2 className="font-semibold text-lg">Analytics</h2>
+          {/* Horizontal bar charts over the live stats (CSS bars, no chart lib). */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Ad verification</p>
+              {[
+                { label: "Verified", value: stats.ads?.verifiedAds ?? 0, cls: "bg-emerald-500" },
+                { label: "Failed", value: stats.ads?.failedAds ?? 0, cls: "bg-red-400" },
+              ].map((row) => {
+                const total = Math.max(1, (stats.ads?.verifiedAds ?? 0) + (stats.ads?.failedAds ?? 0));
+                return (
+                  <div key={row.label} className="mb-2">
+                    <div className="flex justify-between text-xs"><span>{row.label}</span><span className="font-mono">{row.value}</span></div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full ${row.cls}`} style={{ width: `${Math.round((row.value / total) * 100)}%` }} /></div>
+                  </div>
+                );
+              })}
+              <p className="mt-1 text-xs text-muted-foreground">Conversion: <span className="font-semibold">{Math.round(stats.ads?.conversion ?? 0)}%</span> of started ads grant access.</p>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Overview</p>
+              {[
+                { label: "Users", value: stats.overview?.users ?? 0 },
+                { label: "Ad sessions", value: stats.overview?.adSessions ?? 0 },
+                { label: "Active copy access", value: stats.overview?.activeAccess ?? 0 },
+              ].map((row) => {
+                const max = Math.max(...[stats.overview?.users ?? 0, stats.overview?.adSessions ?? 0, stats.overview?.activeAccess ?? 0], 1);
+                return (
+                  <div key={row.label} className="mb-2">
+                    <div className="flex justify-between text-xs"><span>{row.label}</span><span className="font-mono">{Number(row.value).toLocaleString()}</span></div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-brand-500" style={{ width: `${Math.round((row.value / max) * 100)}%` }} /></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-lg">Advertisement Slots</h2>

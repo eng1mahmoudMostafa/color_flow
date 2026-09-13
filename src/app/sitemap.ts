@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.URL || "https://colorflow.example.com";
 
-  const staticRoutes = ["", "/explore", "/categories", "/generator", "/favorites"].map((path) => ({
+  const staticRoutes = ["", "/explore", "/categories", "/generator", "/gradients", "/favorites"].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,

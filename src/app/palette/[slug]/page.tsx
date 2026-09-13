@@ -6,6 +6,7 @@ import { CATEGORY_LABELS } from "@/lib/data/palettes";
 import { PaletteColorStrip, PaletteBreadcrumb } from "@/components/palette-color-strip";
 import { PaletteCard } from "@/components/palette-card";
 import { CopyButton } from "@/components/copy-button";
+import { ExportMenu } from "@/components/export-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -67,11 +68,14 @@ export default async function PalettePage({ params }: { params: Params }) {
             ))}
           </div>
         </div>
-        <CopyButton
-          value={hexList}
-          label="Copy palette"
-          toastMessage="Full palette copied to clipboard."
-        />
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <ExportMenu slug={palette.slug} name={palette.name} description={palette.description} />
+          <CopyButton
+            value={hexList}
+            label="Copy palette"
+            toastMessage="Full palette copied to clipboard."
+          />
+        </div>
       </header>
 
       <PaletteColorStrip colors={palette.colors} />

@@ -1,23 +1,36 @@
 import Link from "next/link";
-import { Palette, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { CATEGORY_META } from "@/lib/data/palettes";
+import { DICT, type Lang } from "@/lib/i18n";
 
-export function Footer() {
+export function Footer({ lang = "en" }: { lang?: Lang }) {
+  const t = DICT[lang].footer;
   return (
     <footer className="border-t border-line bg-surface-raised">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-8 md:flex-row">
           <div className="max-w-xs">
             <div className="flex items-center gap-2 font-bold tracking-tight">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white">
-                <Palette className="h-3.5 w-3.5" aria-hidden />
+              {/* Blue artist-palette brand mark (same artwork as src/app/icon.svg) */}
+              <span className="flex h-7 w-7 items-center justify-center">
+                <svg viewBox="0 0 64 64" className="h-6 w-6" aria-hidden>
+                  <path d="M32 6C17 6 5 17.5 5 32s12 26 27 26c4.5 0 7-2.6 7-6 0-3.2-2.4-4.7-2.4-7.6 0-3.1 2.5-5.4 6-5.4h5.6c6 0 10.8-4.8 10.8-10.9C59 15.8 46.9 6 32 6z" fill="#2563eb" />
+                  <circle cx="17.5" cy="24" r="4" fill="#fff" />
+                  <circle cx="30" cy="17.5" r="4" fill="#fff" />
+                  <circle cx="43.5" cy="21.5" r="4" fill="#fff" />
+                  <circle cx="15.5" cy="37" r="4" fill="#fff" />
+                  <circle cx="41" cy="45.5" r="3.4" fill="#2563eb" />
+                </svg>
               </span>
               Color<span className="text-brand-600 dark:text-brand-400">Flow</span>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-ink-faint">
-              10,000+ color palettes and a harmony generator for designers and developers —
-              try any palette live on the site, and unlock color copying with a quick 30-second ad.
-            </p>
+            <p className="mt-3 text-sm leading-relaxed text-ink-faint">{t.about}</p>
+            <Link
+              href="/gradients"
+              className="mt-2 inline-block text-sm font-semibold text-brand-600 hover:underline dark:text-brand-400"
+            >
+              {DICT[lang].nav.gradients} →
+            </Link>
           </div>
           <nav aria-label="Categories" className="grid grid-cols-2 gap-x-8 gap-y-1.5 sm:grid-cols-3">
             {CATEGORY_META.slice(0, 12).map((c) => (
@@ -66,7 +79,7 @@ export function Footer() {
         </div>
 
         <p className="mt-8 border-t border-line pt-6 text-xs text-ink-faint">
-          © {new Date().getFullYear()} ColorFlow. All palettes are free to use in your projects.
+          © {new Date().getFullYear()} ColorFlow. {t.rights}
           <span className="mx-1.5">·</span>
           Designed &amp; developed by <span className="font-semibold text-ink-soft">البشمهندس محمود مصطفى</span>
         </p>

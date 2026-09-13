@@ -6,16 +6,13 @@ import { LayoutGrid, Wand2, Menu, X, Lock, Heart } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AccessBadge } from "@/components/copy-button";
-
-const NAV_LINKS = [
-  { href: "/explore", label: "Explore", icon: LayoutGrid },
-  { href: "/generator", label: "Generator", icon: Wand2 },
-  { href: "/favorites", label: "Favorites", icon: Heart },
-];
+import { LangToggle } from "@/components/lang-toggle";
+import { DICT, type Lang } from "@/lib/i18n";
 
 /** Navigation — no sign-in; access is guest-based and granted by watching the ad. */
-export function Navbar() {
+export function Navbar({ lang = "en" }: { lang?: Lang }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const t = DICT[lang].nav;
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-surface/85 backdrop-blur-md">
@@ -38,7 +35,12 @@ export function Navbar() {
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map((link) => (
+          {[
+            { href: "/explore", label: t.explore, icon: LayoutGrid },
+            { href: "/generator", label: t.generator, icon: Wand2 },
+            { href: "/gradients", label: t.gradients, icon: LayoutGrid },
+            { href: "/favorites", label: t.favorites, icon: Heart },
+          ].map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -57,6 +59,7 @@ export function Navbar() {
           <div className="hidden sm:block">
             <AccessBadge />
           </div>
+          <LangToggle current={lang} />
           <ThemeToggle />
           <button
             type="button"
@@ -74,7 +77,12 @@ export function Navbar() {
         <div className="border-t border-line bg-surface px-4 py-3 md:hidden">
           <SearchBar className="mb-3" />
           <nav aria-label="Mobile" className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
+            {[
+              { href: "/explore", label: t.explore, icon: LayoutGrid },
+              { href: "/generator", label: t.generator, icon: Wand2 },
+              { href: "/gradients", label: t.gradients, icon: LayoutGrid },
+              { href: "/favorites", label: t.favorites, icon: Heart },
+            ].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
