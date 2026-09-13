@@ -51,11 +51,28 @@ export default function AdminDashboard() {
   };
 
   const isNetworkError = (err: unknown) => err instanceof TypeError;
+
+  /**
+   * Distinguish "offline / flaky network" from "request blocked by a browser
+   * extension (ad blocker)": if the page can still fetch a benign asset, the
+   * connection is fine and something intercepted the API call.
+   */
+  const reportNetworkIssue = async () => {
+    let probeOk = false;
+    try { probeOk = (await fetch("/favicon.ico", { cache: "no-store" })).ok; } catch { probeOk = false; }
+    showNotice(
+      "err",
+      probeOk
+        ? "The request was intercepted before reaching the server — a browser extension (ad blocker / privacy tool) is the most likely cause. Disable extensions for this site and retry."
+        : "Connection dropped — the list below was refreshed to show the actual current state — try again if needed."
+    );
+    loadData();
+  };
   const loadData = useCallback(async (attempt = 0) => {
     try {
       // Independent fetches: a slow/failing stats endpoint must never mask a
       // successful ads load (and vice versa).
-      const [adsRes, statsRes] = await Promise.allSettled([fetch("/api/manage/ads", { cache: "no-store" }), fetch("/api/manage/stats", { cache: "no-store" })]);
+      const [adsRes, statsRes] = await Promise.allSettled([fetch("/api/manage/units", { cache: "no-store" }), fetch("/api/manage/stats", { cache: "no-store" })]);
       const adsOk = adsRes.status === "fulfilled" && adsRes.value.ok;
       const statsOk = statsRes.status === "fulfilled" && statsRes.value.ok;
       if (adsOk) {
@@ -133,7 +150,7 @@ export default function AdminDashboard() {
         try {
           const blob = await upload(`ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, file, {
             access: "public",
-            handleUploadUrl: "/api/manage/ads/blob-token",
+            handleUploadUrl: "/api/manage/units/blob-token",
           });
           blobUrl = blob.url;
         } catch (err: any) {
@@ -159,7 +176,7 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); try {
-      const res = await fetchWithRetry(editingId ? `/api/manage/ads/${editingId}` : "/api/manage/ads", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, mediaType: form.mediaType.toUpperCase(), linkUrl: form.linkUrl || null }) });
+      const res = await fetchWithRetry(editingId ? `/api/manage/units/${editingId}` : "/api/manage/units", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, mediaType: form.mediaType.toUpperCase(), linkUrl: form.linkUrl || null }) });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         throw new Error(j?.error?.message || j?.error || `Failed (${res.status})`);
@@ -168,8 +185,7 @@ export default function AdminDashboard() {
     } catch (err) {
       if (isNetworkError(err)) {
         // The write may or may not have landed — the refetched table shows the truth.
-        showNotice("err", "Connection dropped. The list below was refreshed to show the actual current state — try again if needed.");
-        loadData();
+        void reportNetworkIssue();
       } else {
         showNotice("err", (err as Error).message || "Request failed");
       }
@@ -184,13 +200,13 @@ export default function AdminDashboard() {
     const before = ads;
     setAds((prev) => prev.filter((a) => a.id !== ad.id));
     try {
-      const res = await fetchWithRetry(`/api/manage/ads/${ad.id}`, { method: "DELETE" });
+      const res = await fetchWithRetry(`/api/manage/units/${ad.id}`, { method: "DELETE" });
       let raw = "";
       try { raw = await res.text(); } catch { raw = ""; }
       let finalRaw = raw; let finalStatus = res.status; let finalOk = res.ok;
       if (!res.ok && (res.status === 401 || res.status === 403)) {
         try {
-          const retry = await fetchWithRetry(`/api/manage/ads/${ad.id}?t=${Date.now()}`, { method: "DELETE" });
+          const retry = await fetchWithRetry(`/api/manage/units/${ad.id}?t=${Date.now()}`, { method: "DELETE" });
           finalRaw = await retry.text().catch(() => ""); finalStatus = retry.status; finalOk = retry.ok;
         } catch { /* keep original */ }
       }
@@ -209,8 +225,7 @@ export default function AdminDashboard() {
       if (isNetworkError(err)) {
         // The server may have deleted the ad even though the response was lost —
         // the refetched list shows the truth instead of a scary raw error.
-        showNotice("err", "Connection dropped. The list below was refreshed to show the actual current state — try again if needed.");
-        loadData();
+        void reportNetworkIssue();
       } else {
         showNotice("err", (err as Error).message || "Delete failed");
       }

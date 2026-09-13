@@ -11,8 +11,10 @@ const nextConfig = {
       // Unblockable aliases: ad-blocker extensions block requests whose URL
       // path contains "ads"/"ad/" — these neutral aliases bypass that while
       // the real handlers (and their auth) remain unchanged server-side.
-      { source: "/api/manage/ads", destination: "/api/admin/ads" },
-      { source: "/api/manage/ads/:path*", destination: "/api/admin/ads/:path*" },
+      // "units" instead of "ads": blocker extensions match the substring
+      // "ads" anywhere in a URL — never put that word in a client-visible path.
+      { source: "/api/manage/units", destination: "/api/admin/ads" },
+      { source: "/api/manage/units/:path*", destination: "/api/admin/ads/:path*" },
       { source: "/api/manage/stats", destination: "/api/admin/stats" },
       { source: "/api/manage/blob-check", destination: "/api/admin/blob-check" },
       { source: "/api/reward/media", destination: "/api/ad/media" },
