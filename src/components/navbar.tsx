@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Palette, LayoutGrid, Wand2, Menu, X, Lock, Heart } from "lucide-react";
+import { LayoutGrid, Wand2, Menu, X, Lock, Heart } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AccessBadge } from "@/components/copy-button";
@@ -21,8 +21,12 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-line bg-surface/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-white shadow-soft">
-            <Palette className="h-4 w-4" aria-hidden />
+          {/* Brand mark — same swirl logo as the favicon (src/app/icon.svg). */}
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22252d] shadow-soft">
+            <svg viewBox="0 0 64 64" className="h-5 w-5" aria-hidden>
+              <path d="M43 21c-8-5-19-2-20 7-1 8 6 10 11 11 5 1 8 3 8 7 0 6-9 9-17 4"
+                    fill="none" stroke="#ffffff" strokeWidth="6" strokeLinecap="round"/>
+            </svg>
           </span>
           <span className="text-lg">
             Color<span className="text-brand-600 dark:text-brand-400">Flow</span>
