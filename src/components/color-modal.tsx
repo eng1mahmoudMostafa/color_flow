@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Lock, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
+import { CrashBoundary } from "@/components/crash-boundary";
 import { contrastGrade } from "@/lib/colors";
 
 type Props = {
@@ -147,6 +148,9 @@ export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2.5">
+                  {/* Isolated: a Translate rewrite inside the buttons resets only
+                      this group, never the whole page. */}
+                  <CrashBoundary>
                   <CopyButton value={hex.toUpperCase()} label="Copy HEX" toastMessage={`${hex.toUpperCase()} copied to clipboard.`} />
                   <CopyButton value={detail.rgb} label="Copy RGB" toastMessage="RGB value copied to clipboard." />
                   <CopyButton value={detail.hsl} label="Copy HSL" toastMessage="HSL value copied to clipboard." />
@@ -155,6 +159,7 @@ export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
                     label="Copy all"
                     toastMessage="All color formats copied to clipboard."
                   />
+                  </CrashBoundary>
                 </div>
 
                 <p className="mt-4 flex items-center gap-1.5 text-[11px] leading-relaxed text-ink-faint">

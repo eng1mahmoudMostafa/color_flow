@@ -41,7 +41,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" translate="no" className="notranslate" suppressHydrationWarning>
+    // NOTE: page translation stays ENABLED (no translate="no" here).
+    // Crash-safety is handled instead by:
+    //  1. translate="no" only on technical code values (HEX/RGB/...) which must
+    //     never be rewritten,  2. an app-level ErrorBoundary that recovers, and
+    //  3. toast unmount without exit-animation DOM ops that clash with Translate.
+    <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
         <Providers>
           <Navbar />

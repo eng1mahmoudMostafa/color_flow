@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
+import { CrashBoundary } from "@/components/crash-boundary";
 import { cn } from "@/lib/utils";
 
 type ToastVariant = "success" | "error" | "info";
@@ -33,11 +34,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
+      {/* Toasts live in their own crash boundary: even if auto-translate
+          rewrites a toast node mid-animation, only the toast subtree resets —
+          the page (and the copy result) is never replaced by an error page.
+          The container itself stays translatable; only the technical code
+          value inside keeps translate="no". */}
+      <CrashBoundary>
       <div
         aria-live="polite"
         aria-atomic="true"
-        translate="no"
-        className="pointer-events-none fixed inset-x-0 bottom-4 z-[80] flex flex-col items-center gap-2 px-4 sm:bottom-6 notranslate"
+        className="pointer-events-none fixed inset-x-0 bottom-4 z-[80] flex flex-col items-center gap-2 px-4 sm:bottom-6"
       >
         <AnimatePresence>
           {toasts.map((toast) => (
@@ -47,6 +53,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
+              // layout={false} + no manual DOM reads: keeps framer-motion from
+              // touching nodes Translate may have rewritten.
+              layout={false}
               className={cn(
                 "pointer-events-auto flex max-w-md items-center gap-2.5 rounded-full border px-4 py-2.5 text-sm font-medium shadow-lifted backdrop-blur",
                 toast.variant === "success" &&
@@ -73,6 +82,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           ))}
         </AnimatePresence>
       </div>
+      </CrashBoundary>
     </ToastContext.Provider>
   );
 }
