@@ -45,9 +45,8 @@ export function CopyButton({ value, toastMessage, className, label = "Copy", var
       } else {
         push("Could not access the clipboard. Please copy manually.", "error");
       }
-    } catch (err) {
+    } catch {
       // Never let an unexpected error crash the whole app — surface a toast.
-      console.error("Copy failed:", err);
       push("Something went wrong while copying. Please try again.", "error");
     } finally {
       setBusy(false);

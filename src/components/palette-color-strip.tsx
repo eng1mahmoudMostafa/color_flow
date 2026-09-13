@@ -18,14 +18,21 @@ export function PaletteColorStrip({ colors }: { colors: ColorInfo[] }) {
   return (
     <>
       <div className="overflow-hidden rounded-3xl border border-line shadow-lifted">
-        <div className="flex h-64 sm:h-80">
+        <div className="flex h-64 sm:h-80" role="list">
           {colors.map((color, i) => (
-            <button
+            <div
               key={`${color.hex}-${i}`}
-              type="button"
+              role="listitem"
+              tabIndex={0}
               onClick={() => setActiveColor(color)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setActiveColor(color);
+                }
+              }}
               aria-label={`Open details for ${color.name} ${color.hex}`}
-              className="group relative flex-1 transition-all duration-300 hover:flex-[1.6] focus-visible:flex-[1.6]"
+              className="group relative flex-1 cursor-pointer transition-all duration-300 hover:flex-[1.6] focus-visible:flex-[1.6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
               style={{ backgroundColor: color.hex }}
             >
               <span
@@ -36,8 +43,9 @@ export function PaletteColorStrip({ colors }: { colors: ColorInfo[] }) {
                 <span className="font-mono text-xs opacity-90">{color.hex.toUpperCase()}</span>
               </span>
               <span
-                className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
               >
                 <CopyButton
                   variant="icon"
@@ -46,7 +54,7 @@ export function PaletteColorStrip({ colors }: { colors: ColorInfo[] }) {
                   className="bg-black/25 text-white"
                 />
               </span>
-            </button>
+            </div>
           ))}
         </div>
       </div>
