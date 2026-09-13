@@ -34,8 +34,19 @@ export const adminAdSchema = z.object({
     .string()
     .trim()
     .max(2000)
+    .transform((v) => {
+      const t = v.trim();
+      if (!t) return t;
+      if (/^https?:\/\//i.test(t) || /^\/ads-media\//.test(t)) return t;
+      // Forgiving: user pasted "files.catbox.moe/xxx.jpg" without scheme
+      // or with wrapping quotes/whitespace from copy-paste.
+      const unquoted = t.replace(/^["'<\s]+|["'>\s]+$/g, "").trim();
+      if (/^https?:\/\//i.test(unquoted) || /^\/ads-media\//.test(unquoted)) return unquoted;
+      if (/^[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test(unquoted)) return `https://${unquoted}`;
+      return unquoted;
+    })
     .refine((v) => /^https?:\/\//i.test(v) || /^\/ads-media\//.test(v), {
-      message: "Enter a full external URL (https://) or an uploaded local file (/ads-media/...).",
+      message: "Enter a full external URL (https://…) or an uploaded local file (/ads-media/…). Tip: the link must start with https://",
     }),
   mediaType: z.enum(["IMAGE", "VIDEO"]).default("IMAGE"),
   linkUrl: z
