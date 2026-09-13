@@ -21,11 +21,15 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-line bg-surface/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight">
-          {/* Brand mark — same swirl logo as the favicon (src/app/icon.svg). */}
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22252d] shadow-soft">
-            <svg viewBox="0 0 64 64" className="h-5 w-5" aria-hidden>
-              <path d="M43 21c-8-5-19-2-20 7-1 8 6 10 11 11 5 1 8 3 8 7 0 6-9 9-17 4"
-                    fill="none" stroke="#ffffff" strokeWidth="6" strokeLinecap="round"/>
+          {/* Brand mark — blue artist-palette logo, same artwork as src/app/icon.svg */}
+          <span className="flex h-8 w-8 items-center justify-center shadow-soft">
+            <svg viewBox="0 0 64 64" className="h-7 w-7" aria-hidden>
+              <path d="M32 6C17 6 5 17.5 5 32s12 26 27 26c4.5 0 7-2.6 7-6 0-3.2-2.4-4.7-2.4-7.6 0-3.1 2.5-5.4 6-5.4h5.6c6 0 10.8-4.8 10.8-10.9C59 15.8 46.9 6 32 6z" fill="#2563eb"/>
+              <circle cx="17.5" cy="24" r="4" fill="currentColor" className="text-white"/>
+              <circle cx="30" cy="17.5" r="4" fill="currentColor" className="text-white"/>
+              <circle cx="43.5" cy="21.5" r="4" fill="currentColor" className="text-white"/>
+              <circle cx="15.5" cy="37" r="4" fill="currentColor" className="text-white"/>
+              <circle cx="41" cy="45.5" r="3.4" fill="#2563eb"/>
             </svg>
           </span>
           <span className="text-lg">
