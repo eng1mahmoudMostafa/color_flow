@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ title: "", message: "", mediaUrl: "", mediaType: "image" as "image" | "video", linkUrl: "", durationSeconds: 30, slot: 1, active: true });
-  const loadData = useCallback(async (attempt = 0) => {
+  const loadData = useCallback(async (attempt = 0, silent = false) => {
     try {
       const [adsRes, statsRes] = await Promise.all([fetch("/api/admin/ads", { cache: "no-store" }), fetch("/api/admin/stats", { cache: "no-store" })]);
       let anyOk = false;
@@ -48,11 +48,13 @@ export default function AdminDashboard() {
         const j = await statsRes.json();
         setStats(j?.data ?? j ?? null);
       }
-      if (!anyOk && attempt < 3) { setTimeout(() => loadData(attempt + 1), 900); return; }
-      if (!anyOk) showNotice("err", `Failed to load data (ads=${adsRes.status}, stats=${statsRes.status}) — will retry on next action`);
+      if (!anyOk && attempt < 3) { setTimeout(() => loadData(attempt + 1, silent), 900); return; }
+      // Silent refetches (e.g. right after a successful delete) must never
+      // overwrite the success notice with a load error.
+      if (!anyOk && !silent) showNotice("err", `Failed to load data (ads=${adsRes.status}, stats=${statsRes.status}) — will retry on next action`);
     } catch {
-      if (attempt < 3) { setTimeout(() => loadData(attempt + 1), 900); return; }
-      showNotice("err", "Failed to load data — check your connection");
+      if (attempt < 3) { setTimeout(() => loadData(attempt + 1, silent), 900); return; }
+      if (!silent) showNotice("err", "Failed to load data — check your connection");
     } finally {
       setLoading(false);
     }
@@ -160,7 +162,7 @@ export default function AdminDashboard() {
         throw new Error(typeof m === "string" ? m : "Delete failed");
       }
       showNotice("ok", "Ad deleted");
-      loadData(); // silent refetch - auto-retries, never masks a successful delete
+      loadData(0, true); // silent refetch - auto-retries, never masks a successful delete
     } catch (err) {
       setAds(before);
       showNotice("err", (err as Error).message || "Delete failed");
