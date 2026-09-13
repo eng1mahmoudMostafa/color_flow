@@ -95,8 +95,8 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
       let sessionId: string | null = null;
       try {
         const [mediaRes, startRes] = await Promise.all([
-          fetch("/api/ad/media", { cache: "no-store" }),
-          fetch("/api/ad/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }),
+          fetch("/api/reward/media", { cache: "no-store" }),
+          fetch("/api/reward/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }),
         ]);
         const mediaJson = await mediaRes.json().catch(() => null);
         list = normalize(mediaJson?.data?.ads ?? mediaJson?.ads);
@@ -118,7 +118,7 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
   const verifyCompletion = useCallback(async () => {
     setPhase("verifying");
     try {
-      const res = await fetch("/api/ad/verify", {
+      const res = await fetch("/api/reward/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adSessionId }),
@@ -161,7 +161,7 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
 
   const handleAdClick = () => {
     if (!currentAd?.linkUrl) return;
-    void fetch("/api/ad/click", {
+    void fetch("/api/reward/click", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: currentAd.id }),

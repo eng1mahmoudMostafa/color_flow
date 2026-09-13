@@ -55,7 +55,7 @@ export default function AdminDashboard() {
     try {
       // Independent fetches: a slow/failing stats endpoint must never mask a
       // successful ads load (and vice versa).
-      const [adsRes, statsRes] = await Promise.allSettled([fetch("/api/admin/ads", { cache: "no-store" }), fetch("/api/admin/stats", { cache: "no-store" })]);
+      const [adsRes, statsRes] = await Promise.allSettled([fetch("/api/manage/ads", { cache: "no-store" }), fetch("/api/manage/stats", { cache: "no-store" })]);
       const adsOk = adsRes.status === "fulfilled" && adsRes.value.ok;
       const statsOk = statsRes.status === "fulfilled" && statsRes.value.ok;
       if (adsOk) {
@@ -82,6 +82,19 @@ export default function AdminDashboard() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Escape closes the ad form and the preview modal.
+  useEffect(() => {
+    if (!showForm && !previewOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (showForm) resetForm();
+        setPreviewOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showForm, previewOpen]);
+
   const showNotice = (type: "ok" | "err", msg: string) => { setNotice({ type, msg }); setTimeout(() => setNotice(null), 4000); };
 
   const resetForm = () => { setForm({ title: "", message: "", mediaUrl: "", mediaType: "image", linkUrl: "", durationSeconds: 30, slot: 1, active: true }); setEditingId(null); setShowForm(false); };
@@ -102,8 +115,8 @@ export default function AdminDashboard() {
       // Step 1 — ask the server which upload mode is available.
       let blobMode = false;
       try {
-        stamp("checking /api/admin/blob-check …");
-        const fdCheck = await fetch("/api/admin/blob-check");
+        stamp("checking upload service …");
+        const fdCheck = await fetch("/api/manage/blob-check");
         const raw = await fdCheck.text();
         stamp(`blob-check: HTTP ${fdCheck.status}`);
         if (!fdCheck.ok) throw new Error(`blob-check HTTP ${fdCheck.status}: ${raw.slice(0, 120)}`);
@@ -120,7 +133,7 @@ export default function AdminDashboard() {
         try {
           const blob = await upload(`ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`, file, {
             access: "public",
-            handleUploadUrl: "/api/admin/ads/blob-token",
+            handleUploadUrl: "/api/manage/ads/blob-token",
           });
           blobUrl = blob.url;
         } catch (err: any) {
@@ -146,7 +159,7 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); try {
-      const res = await fetchWithRetry(editingId ? `/api/admin/ads/${editingId}` : "/api/admin/ads", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, mediaType: form.mediaType.toUpperCase(), linkUrl: form.linkUrl || null }) });
+      const res = await fetchWithRetry(editingId ? `/api/manage/ads/${editingId}` : "/api/manage/ads", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, mediaType: form.mediaType.toUpperCase(), linkUrl: form.linkUrl || null }) });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         throw new Error(j?.error?.message || j?.error || `Failed (${res.status})`);
@@ -171,13 +184,13 @@ export default function AdminDashboard() {
     const before = ads;
     setAds((prev) => prev.filter((a) => a.id !== ad.id));
     try {
-      const res = await fetchWithRetry(`/api/admin/ads/${ad.id}`, { method: "DELETE" });
+      const res = await fetchWithRetry(`/api/manage/ads/${ad.id}`, { method: "DELETE" });
       let raw = "";
       try { raw = await res.text(); } catch { raw = ""; }
       let finalRaw = raw; let finalStatus = res.status; let finalOk = res.ok;
       if (!res.ok && (res.status === 401 || res.status === 403)) {
         try {
-          const retry = await fetchWithRetry(`/api/admin/ads/${ad.id}?t=${Date.now()}`, { method: "DELETE" });
+          const retry = await fetchWithRetry(`/api/manage/ads/${ad.id}?t=${Date.now()}`, { method: "DELETE" });
           finalRaw = await retry.text().catch(() => ""); finalStatus = retry.status; finalOk = retry.ok;
         } catch { /* keep original */ }
       }
