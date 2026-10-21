@@ -50,19 +50,17 @@ body {
    RTL (Arabic) adjustments
    Tailwind's left/right utilities are physical, so any element positioned with
    `left-*` / `right-*` must be flipped when the document direction is RTL.
+   Wherever possible we now use Tailwind's logical utilities (`ms-*`, `ps-*`,
+   `end-*`, `start-*`) which the browser flips automatically based on `dir`.
    --------------------------------------------------------------------------- */
 [dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
 }
 
-/* Search bar: magnifier icon + clear button live on opposite sides. */
+/* Search bar: magnifier icon lives on the opposite side in RTL. */
 [dir="rtl"] .rtl-search-icon {
   left: auto;
   right: 0.75rem;
-}
-[dir="rtl"] .rtl-search-input {
-  padding-left: 2.25rem;
-  padding-right: 2.25rem;
 }
 
 /* Dropdown menus (export) should open toward the inline-start edge. */
