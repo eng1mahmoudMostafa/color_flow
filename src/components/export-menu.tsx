@@ -78,7 +78,7 @@ export function ExportMenu({ slug, name, description }: Props) {
       <button
         type="button"
         onClick={share}
-        aria-label={`Share ${name}`}
+        aria-label={`${t.share} ${name}`}
         className="inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-3.5 py-2.5 text-sm font-semibold text-ink shadow-soft ring-1 ring-line transition hover:bg-surface-raised"
       >
         {shared ? <Check className="h-4 w-4 text-emerald-500" aria-hidden /> : <Share2 className="h-4 w-4" aria-hidden />}

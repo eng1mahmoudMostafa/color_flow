@@ -27,7 +27,7 @@ export function PaletteCard({ palette, index = 0 }: { palette: PaletteSummary; i
         transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.3), ease: "easeOut" }}
         className="group overflow-hidden rounded-2xl border border-line bg-surface shadow-soft transition hover:shadow-lifted"
       >
-        <Link href={`/palette/${palette.slug}`} className="block" aria-label={`View ${palette.name} palette`}>
+        <Link href={`/palette/${palette.slug}`} className="block" aria-label={t.viewPalette(palette.name)}>
           <div className="flex h-32">
             {palette.colors.map((color, i) => (
               <div
@@ -67,7 +67,7 @@ export function PaletteCard({ palette, index = 0 }: { palette: PaletteSummary; i
                 key={`${color.hex}-chip-${i}`}
                 type="button"
                 onClick={() => setActiveColor(color.hex)}
-                aria-label={`Details for ${color.name} ${color.hex}`}
+                aria-label={t.detailsFor(color.name, color.hex)}
                 className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition hover:opacity-80"
                 style={{ backgroundColor: color.hex, color: bestTextColor(color.hex) }}
               >

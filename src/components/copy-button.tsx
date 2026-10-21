@@ -61,7 +61,7 @@ export function CopyButton({ value, toastMessage, className, label = "Copy", var
         type="button"
         onClick={onClick}
         disabled={busy}
-        aria-label={`Copy ${value}`}
+        aria-label={`${t.copy} ${value}`}
         title="Copy color code"
         className={cn(
           "inline-flex items-center justify-center rounded-full p-2 backdrop-blur transition hover:scale-110 active:scale-95 disabled:opacity-50",

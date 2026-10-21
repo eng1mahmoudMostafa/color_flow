@@ -145,6 +145,7 @@ export const DICT = {
       lockedBadge: "Copy locked · watch ad",
       tryColors: "Try these colors",
       viewPalette: (name: string) => `View ${name} palette`,
+      detailsFor: (name: string, hex: string) => `Details for ${name} ${hex}`,
     },
     try: {
       title: (name: string) => `Try colors — ${name}`,
@@ -381,6 +382,7 @@ export const DICT = {
       lockedBadge: "النسخ مقفل · شاهد إعلاناً",
       tryColors: "جرّب هذه الألوان",
       viewPalette: (name: string) => `عرض باليتة ${name}`,
+      detailsFor: (name: string, hex: string) => `تفاصيل ${name} ${hex}`,
     },
     try: {
       title: (name: string) => `جرّب الألوان — ${name}`,
