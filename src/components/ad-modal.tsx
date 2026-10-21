@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { useDict } from "@/components/providers";
 
 interface Ad {
   id: string;
@@ -52,6 +53,7 @@ function normalize(raw: unknown): Ad[] {
 }
 
 export function AdModal({ open, onClose, onComplete }: AdModalProps) {
+  const t = useDict().ad;
   const [phase, setPhase] = useState<Phase>("loading");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [remaining, setRemaining] = useState(0);
@@ -245,13 +247,13 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
               </div>
               <div className="flex items-center gap-2">
                 {currentAd?.mediaType === "VIDEO" && (
-                  <button onClick={() => setMuted((m) => !m)} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label={muted ? "Unmute" : "Mute"}>
+                  <button onClick={() => setMuted((m) => !m)} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label={muted ? t.unmute : t.mute}>
                     {muted ? <VolumeX className="w-4 h-4 text-gray-500" /> : <Volume2 className="w-4 h-4 text-gray-500" />}
                   </button>
                 )}
                 {phase === "playing" && remaining === 0 && (hasNext || mediaPlaying) && (
                   <button onClick={handleSkip} className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                    <SkipForward className="w-4 h-4" /> {hasNext ? "Skip" : "Continue"}
+                    <SkipForward className="w-4 h-4" /> {hasNext ? t.skip : t.continue}
                   </button>
                 )}
               </div>
@@ -267,19 +269,19 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
             </div>
             {remaining === 0 && mediaPlaying && (
               <div className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                ✓ المدة المطلوبة اكتملت — أكمل مشاهدة الإعلان بحرية أو اضغط تخطي / Watch freely or skip
+                ✓ المدة المطلوبة اكتملت — أكمل مشاهدة الإعلان بحرية أو اضغط تخطي / {t.watchFreely}
               </div>
             )}
 
-            {phase === "loading" && <div className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">Preparing advertisement…</div>}
-            {phase === "verifying" && <div className="mt-3 flex items-center justify-center gap-2 text-sm text-blue-600 dark:text-blue-400"><div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />Verifying...</div>}
-            {phase === "done" && <div className="mt-3 text-center text-sm text-green-600 dark:text-green-400 font-medium">✓ Copying unlocked for 24 hours!</div>}
+            {phase === "loading" && <div className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">{t.preparing}</div>}
+            {phase === "verifying" && <div className="mt-3 flex items-center justify-center gap-2 text-sm text-blue-600 dark:text-blue-400"><div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />{t.verifying}</div>}
+            {phase === "done" && <div className="mt-3 text-center text-sm text-green-600 dark:text-green-400 font-medium">{t.done}</div>}
             {phase === "error" && (
               <div className="mt-3 space-y-2">
                 <div className="text-center text-sm text-red-600 dark:text-red-400">{error}</div>
                 <div className="text-center">
                   <button onClick={() => { setCurrentIndex(0); setRemaining(allAds[0]?.durationSeconds ?? 15); setPhase("playing"); }} className="px-4 py-1.5 text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700">
-                    Try again
+                    {t.tryAgain}
                   </button>
                 </div>
               </div>

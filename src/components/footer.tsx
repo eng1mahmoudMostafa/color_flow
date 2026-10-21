@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { CATEGORY_META } from "@/lib/data/palettes";
-import { DICT, type Lang } from "@/lib/i18n";
+import { DICT, categoryLabel, type Lang } from "@/lib/i18n";
 
 export function Footer({ lang = "en" }: { lang?: Lang }) {
   const t = DICT[lang].footer;
@@ -39,7 +39,7 @@ export function Footer({ lang = "en" }: { lang?: Lang }) {
                 href={`/explore?category=${c.key}`}
                 className="text-sm text-ink-soft transition hover:text-brand-600 dark:hover:text-brand-400"
               >
-                {c.label} palettes
+                {categoryLabel(c.key, lang, c.label)} {DICT[lang].common.palettes}
               </Link>
             ))}
           </nav>

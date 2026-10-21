@@ -4,6 +4,7 @@ import { listPalettes } from "@/lib/palettes";
 import { CATEGORY_META, CATEGORY_LABELS } from "@/lib/data/palettes";
 import { PaletteCard } from "@/components/palette-card";
 import { paletteQuerySchema } from "@/lib/validation";
+import { DICT, getLang, categoryLabel } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Explore Palettes",
@@ -16,6 +17,8 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function ExplorePage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
+  const lang = await getLang();
+  const t = DICT[lang].explore;
   const flat: Record<string, string> = {};
   for (const [k, v] of Object.entries(raw)) {
     if (typeof v === "string") flat[k] = v;
@@ -34,21 +37,23 @@ export default async function ExplorePage({ searchParams }: { searchParams: Sear
     return `/explore?${p.toString()}`;
   };
 
+  const activeCat = query.category
+    ? categoryLabel(query.category, lang, CATEGORY_LABELS[query.category])
+    : null;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
-          {query.category ? `${CATEGORY_LABELS[query.category] ?? query.category} palettes` : "Explore palettes"}
-          {query.trending ? " — trending" : ""}
-          {query.featured ? " — editor's picks" : ""}
+          {activeCat ? `${activeCat} ${DICT[lang].common.palettes}` : t.title}
+          {query.trending ? ` — ${t.trending}` : ""}
+          {query.featured ? ` — ${t.featured}` : ""}
         </h1>
-        <p className="mt-1.5 text-sm text-ink-faint">
-          {total} palette{total === 1 ? "" : "s"} found.
-        </p>
+        <p className="mt-1.5 text-sm text-ink-faint">{t.found(total)}</p>
       </header>
 
       {/* Category filter chips */}
-      <nav aria-label="Filter by category" className="mb-8 flex flex-wrap gap-2">
+      <nav aria-label={t.filterByCategory} className="mb-8 flex flex-wrap gap-2">
         <Link
           href="/explore"
           className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition ${
@@ -57,7 +62,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Sear
               : "bg-surface text-ink-soft ring-line hover:text-ink"
           }`}
         >
-          All
+          {t.all}
         </Link>
         {CATEGORY_META.map((c) => (
           <Link
@@ -69,16 +74,16 @@ export default async function ExplorePage({ searchParams }: { searchParams: Sear
                 : "bg-surface text-ink-soft ring-line hover:text-ink"
             }`}
           >
-            {c.label}
+            {categoryLabel(c.key, lang, c.label)}
           </Link>
         ))}
       </nav>
 
       {palettes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line py-16 text-center">
-          <p className="text-sm text-ink-faint">No palettes match your filters yet.</p>
+          <p className="text-sm text-ink-faint">{t.empty}</p>
           <Link href="/explore" className="mt-3 inline-block text-sm font-semibold text-brand-600 hover:underline">
-            Clear filters
+            {t.clear}
           </Link>
         </div>
       ) : (
@@ -97,16 +102,18 @@ export default async function ExplorePage({ searchParams }: { searchParams: Sear
               href={pageParams((query.page ?? 1) - 1)}
               className="rounded-xl bg-surface px-4 py-2 text-sm font-semibold ring-1 ring-line transition hover:bg-surface-raised"
             >
-              ← Previous
+              <span className="rtl-arrow">←</span> {t.previous}
             </Link>
           )}
-          <span className="text-sm text-ink-faint">Page {query.page ?? 1}</span>
+          <span className="text-sm text-ink-faint">
+            {t.page} {query.page ?? 1}
+          </span>
           {hasMore && (
             <Link
               href={pageParams((query.page ?? 1) + 1)}
               className="rounded-xl bg-surface px-4 py-2 text-sm font-semibold ring-1 ring-line transition hover:bg-surface-raised"
             >
-              Next →
+              {t.next} <span className="rtl-arrow">→</span>
             </Link>
           )}
         </nav>

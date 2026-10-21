@@ -7,6 +7,7 @@ import { PaletteColorStrip, PaletteBreadcrumb } from "@/components/palette-color
 import { PaletteCard } from "@/components/palette-card";
 import { CopyButton } from "@/components/copy-button";
 import { ExportMenu } from "@/components/export-menu";
+import { DICT, getLang, categoryLabel } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,9 @@ export default async function PalettePage({ params }: { params: Params }) {
   const palette = await getPaletteBySlug(slug);
   if (!palette) notFound();
 
+  const lang = await getLang();
+  const t = DICT[lang].palette;
+  const catLabel = categoryLabel(palette.category, lang, CATEGORY_LABELS[palette.category]);
   const related = await getRelatedPalettes(palette.category, palette.slug, 4);
   const hexList = palette.colors.map((c) => c.hex.toUpperCase()).join(", ");
 
@@ -44,12 +48,12 @@ export default async function PalettePage({ params }: { params: Params }) {
             <h1 className="text-3xl font-bold tracking-tight">{palette.name}</h1>
             {palette.trending && (
               <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                Trending
+                {t.trending}
               </span>
             )}
             {palette.featured && (
               <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:bg-brand-950 dark:text-brand-300">
-                Featured
+                {t.featured}
               </span>
             )}
           </div>
@@ -59,7 +63,7 @@ export default async function PalettePage({ params }: { params: Params }) {
               href={`/explore?category=${palette.category}`}
               className="rounded-full bg-surface-raised px-3 py-1 font-semibold text-ink-soft ring-1 ring-line transition hover:text-ink"
             >
-              {CATEGORY_LABELS[palette.category] ?? palette.category}
+              {catLabel}
             </Link>
             {palette.tags.map((tag) => (
               <span key={tag} className="rounded-full px-2.5 py-1 text-ink-faint">
@@ -72,8 +76,8 @@ export default async function PalettePage({ params }: { params: Params }) {
           <ExportMenu slug={palette.slug} name={palette.name} description={palette.description} />
           <CopyButton
             value={hexList}
-            label="Copy palette"
-            toastMessage="Full palette copied to clipboard."
+            label={t.copy}
+            toastMessage={t.copied}
           />
         </div>
       </header>
@@ -83,7 +87,7 @@ export default async function PalettePage({ params }: { params: Params }) {
       {related.length > 0 && (
         <section className="mt-14" aria-labelledby="related-heading">
           <h2 id="related-heading" className="mb-5 text-xl font-bold tracking-tight">
-            More {CATEGORY_LABELS[palette.category] ?? palette.category} palettes
+            {t.more(catLabel)}
           </h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {related.map((p, i) => (

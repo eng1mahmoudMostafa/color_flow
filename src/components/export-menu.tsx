@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download, Share2, Check } from "lucide-react";
+import { useDict } from "@/components/providers";
 
 const FORMATS = [
   { key: "json", label: "JSON" },
@@ -14,6 +15,7 @@ type Props = { slug: string; name: string; description?: string };
 
 /** Export dropdown (JSON / CSS / SCSS / Tailwind) + native share button. */
 export function ExportMenu({ slug, name, description }: Props) {
+  const t = useDict().common;
   const [open, setOpen] = useState(false);
   const [shared, setShared] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,12 +55,12 @@ export function ExportMenu({ slug, name, description }: Props) {
           aria-expanded={open}
           className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-sm font-semibold text-ink shadow-soft ring-1 ring-line transition hover:bg-surface-raised"
         >
-          <Download className="h-4 w-4" aria-hidden /> Export
+          <Download className="h-4 w-4" aria-hidden /> {t.export}
         </button>
         {open && (
           <div
             role="menu"
-            className="absolute right-0 z-30 mt-2 w-40 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-soft"
+            className="absolute right-0 z-30 mt-2 w-40 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-soft rtl-dropdown"
           >
             {FORMATS.map((f) => (
               <a
@@ -80,7 +82,7 @@ export function ExportMenu({ slug, name, description }: Props) {
         className="inline-flex items-center justify-center gap-2 rounded-xl bg-surface px-3.5 py-2.5 text-sm font-semibold text-ink shadow-soft ring-1 ring-line transition hover:bg-surface-raised"
       >
         {shared ? <Check className="h-4 w-4 text-emerald-500" aria-hidden /> : <Share2 className="h-4 w-4" aria-hidden />}
-        <span className="hidden sm:inline">{shared ? "Link copied" : "Share"}</span>
+        <span className="hidden sm:inline">{shared ? t.linkCopied : t.share}</span>
       </button>
     </div>
   );

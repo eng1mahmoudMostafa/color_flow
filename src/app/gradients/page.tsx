@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GRADIENTS } from "@/lib/data/gradients";
 import { CopyButton } from "@/components/copy-button";
+import { DICT, getLang } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "CSS Gradients",
@@ -14,15 +15,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GradientsPage() {
+export default async function GradientsPage() {
+  const lang = await getLang();
+  const t = DICT[lang].gradients;
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <header className="mb-8 max-w-2xl">
-        <h1 className="text-3xl font-bold tracking-tight">CSS Gradients</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-          Curated gradients with the exact CSS code. Click copy to grab the full{" "}
-          <code className="rounded bg-surface-raised px-1 py-0.5 text-xs">background</code> value.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-ink-soft">{t.sub}</p>
       </header>
 
       <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Gradients">
@@ -44,7 +44,7 @@ export default function GradientsPage() {
                 value={`background: ${g.css};`}
                 toastMessage={`${g.name} CSS copied to clipboard.`}
                 className="bg-black/10 text-ink dark:bg-white/10"
-                label="Copy gradient CSS"
+                label={t.copy}
               />
             </div>
           </li>
@@ -52,9 +52,9 @@ export default function GradientsPage() {
       </ul>
 
       <p className="mt-10 text-center text-sm text-ink-faint">
-        Want palettes too?{" "}
+        {t.footer}{" "}
         <Link href="/explore" className="font-semibold text-brand-600 hover:underline dark:text-brand-400">
-          Explore palettes →
+          {t.explore}
         </Link>
       </p>
     </div>

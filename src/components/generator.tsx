@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Wand2, Loader2, RefreshCw } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
 import { useToast } from "@/components/toast";
+import { useDict } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
 const HARMONIES = [
@@ -18,6 +19,8 @@ const HARMONIES = [
 type GeneratedColor = { hex: string; rgb: string; hsl: string; cmyk: string; textOn: string };
 
 export function Generator() {
+  const t = useDict().generator;
+  const common = useDict().common;
   const [base, setBase] = useState("#3B82F6");
   const [harmony, setHarmony] = useState<(typeof HARMONIES)[number]["key"]>("analogous");
   const [salt, setSalt] = useState(0);
@@ -38,12 +41,12 @@ export function Generator() {
       if (json.ok && json.data.palette?.length) {
         setPalette(json.data.palette as GeneratedColor[]);
       } else if (json.data?.rateLimited) {
-        push("Generator rate limit reached — please wait a moment.", "error");
+        push(t.rateLimit, "error");
       } else if (json.error) {
-        push(json.error.message ?? "Generation failed.", "error");
+        push(json.error.message ?? t.failed, "error");
       }
     } catch {
-      push("Network error. Please try again.", "error");
+      push(t.networkError, "error");
     } finally {
       setLoading(false);
     }
@@ -54,7 +57,7 @@ export function Generator() {
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-ink-faint">
-            Base color
+            {t.base}
           </span>
           <span className="flex items-center gap-2.5 rounded-xl border border-line bg-surface-raised p-2">
             <input
@@ -79,7 +82,7 @@ export function Generator() {
 
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-ink-faint">
-            Harmony
+            {t.harmony}
           </span>
           <select
             value={harmony}
@@ -88,7 +91,7 @@ export function Generator() {
           >
             {HARMONIES.map((h) => (
               <option key={h.key} value={h.key}>
-                {h.label}
+                {t.harmonies[h.key]}
               </option>
             ))}
           </select>
@@ -110,7 +113,7 @@ export function Generator() {
             ) : (
               <Wand2 className="h-4 w-4" aria-hidden />
             )}
-            Generate
+            {t.generate}
           </button>
           {palette.length > 0 && (
             <button
@@ -120,8 +123,8 @@ export function Generator() {
                 setSalt(next);
                 void generate(next);
               }}
-              aria-label="Regenerate variation"
-              title="New variation"
+              aria-label={t.regenerate}
+              title={t.newVariation}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft ring-1 ring-line transition hover:bg-surface-raised hover:text-ink"
             >
               <RefreshCw className="h-4 w-4" aria-hidden />
@@ -151,8 +154,8 @@ export function Generator() {
           <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <CopyButton
               value={palette.map((c) => c.hex.toUpperCase()).join(", ")}
-              label="Copy palette"
-              toastMessage="Generated palette copied to clipboard."
+              label={common.copyPalette}
+              toastMessage={common.paletteCopied}
             />
             {palette.map((c, i) => (
               <CopyButton

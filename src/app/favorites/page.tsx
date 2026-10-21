@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { PaletteCard } from "@/components/palette-card";
 import { getFavoriteSlugs, onFavoritesChange } from "@/lib/favorites";
+import { useDict } from "@/components/providers";
 import type { PaletteSummary } from "@/types";
 
 export default function FavoritesPage() {
+  const t = useDict().favorites;
   const [palettes, setPalettes] = useState<PaletteSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,26 +60,24 @@ export default function FavoritesPage() {
           <Heart className="h-5 w-5 fill-current" aria-hidden />
         </span>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Favorites</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-sm text-ink-soft">
-            {loading ? "Loading…" : `${palettes.length} saved palette${palettes.length === 1 ? "" : "s"}`}
+            {loading ? t.loading : t.saved(palettes.length)}
           </p>
         </div>
       </header>
 
       {loading && (
         <div className="flex items-center justify-center gap-2 py-20 text-sm text-ink-faint">
-          <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> Loading your favorites…
+          <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> {t.loadingLong}
         </div>
       )}
 
       {!loading && palettes.length === 0 && (
         <div className="rounded-2xl border border-dashed border-line py-20 text-center">
           <Heart className="mx-auto h-10 w-10 text-ink-faint" aria-hidden />
-          <p className="mt-3 text-sm font-medium">No favorites yet.</p>
-          <p className="mt-1 text-sm text-ink-faint">
-            Tap the heart on any palette to save it here — stored on your device.
-          </p>
+          <p className="mt-3 text-sm font-medium">{t.empty}</p>
+          <p className="mt-1 text-sm text-ink-faint">{t.emptyHint}</p>
         </div>
       )}
 

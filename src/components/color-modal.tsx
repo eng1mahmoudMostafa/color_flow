@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Lock, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
 import { CrashBoundary } from "@/components/crash-boundary";
+import { useDict } from "@/components/providers";
 import { contrastGrade } from "@/lib/colors";
 
 type Props = {
@@ -31,6 +32,7 @@ type ColorDetail = {
 
 /** Detail modal for a single color: formats, contrast grades and copy actions. */
 export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
+  const t = useDict().color;
   const [detail, setDetail] = useState<ColorDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -91,13 +93,13 @@ export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
               <p className="text-2xl font-bold tracking-tight">{hex.toUpperCase()}</p>
               <p className="mt-0.5 text-sm opacity-80">
                 {colorName ?? "Color"}
-                {paletteName ? ` · from ${paletteName}` : ""}
+                {paletteName ? ` · ${t.from(paletteName)}` : ""}
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close color details"
+              aria-label={t.close}
               className="rounded-full bg-black/20 p-2 text-white backdrop-blur transition hover:bg-black/35"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -107,7 +109,7 @@ export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
           <div className="p-5">
             {loading && (
               <div className="flex items-center justify-center gap-2 py-6 text-sm text-ink-faint">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Loading details…
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {t.loading}
               </div>
             )}
 
@@ -134,13 +136,13 @@ export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
 
                 <div className="mt-4 grid grid-cols-2 gap-2.5 text-xs">
                   <div className="rounded-xl border border-line bg-surface-raised p-3">
-                    <p className="font-semibold uppercase tracking-widest text-ink-faint">On white</p>
+                    <p className="font-semibold uppercase tracking-widest text-ink-faint">{t.onWhite}</p>
                     <p className="mt-1 font-mono text-sm">
                       {detail.contrast.onWhite.ratio.toFixed(2)}:1 · {contrastGrade(detail.contrast.onWhite.ratio)}
                     </p>
                   </div>
                   <div className="rounded-xl border border-line bg-surface-raised p-3">
-                    <p className="font-semibold uppercase tracking-widest text-ink-faint">On black</p>
+                    <p className="font-semibold uppercase tracking-widest text-ink-faint">{t.onBlack}</p>
                     <p className="mt-1 font-mono text-sm">
                       {detail.contrast.onBlack.ratio.toFixed(2)}:1 · {contrastGrade(detail.contrast.onBlack.ratio)}
                     </p>
@@ -151,12 +153,12 @@ export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
                   {/* Isolated: a Translate rewrite inside the buttons resets only
                       this group, never the whole page. */}
                   <CrashBoundary>
-                  <CopyButton value={hex.toUpperCase()} label="Copy HEX" toastMessage={`${hex.toUpperCase()} copied to clipboard.`} />
-                  <CopyButton value={detail.rgb} label="Copy RGB" toastMessage="RGB value copied to clipboard." />
-                  <CopyButton value={detail.hsl} label="Copy HSL" toastMessage="HSL value copied to clipboard." />
+                  <CopyButton value={hex.toUpperCase()} label={t.copyHex} toastMessage={`${hex.toUpperCase()} copied to clipboard.`} />
+                  <CopyButton value={detail.rgb} label={t.copyRgb} toastMessage="RGB value copied to clipboard." />
+                  <CopyButton value={detail.hsl} label={t.copyHsl} toastMessage="HSL value copied to clipboard." />
                   <CopyButton
                     value={[hex.toUpperCase(), detail.rgb, detail.hsl, detail.cmyk].join("\n")}
-                    label="Copy all"
+                    label={t.copyAll}
                     toastMessage="All color formats copied to clipboard."
                   />
                   </CrashBoundary>
@@ -164,7 +166,7 @@ export function ColorModal({ hex, colorName, paletteName, onClose }: Props) {
 
                 <p className="mt-4 flex items-center gap-1.5 text-[11px] leading-relaxed text-ink-faint">
                   <Lock className="h-3 w-3 shrink-0" aria-hidden />
-                  Every copy action is verified on the server. Grades follow WCAG 2.1 contrast rules.
+                  {t.note}
                 </p>
               </>
             )}

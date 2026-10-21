@@ -5,6 +5,7 @@ import { useState } from "react";
 import { bestTextColor } from "@/lib/colors";
 import { CopyButton } from "@/components/copy-button";
 import { ColorModal } from "@/components/color-modal";
+import { useDict } from "@/components/providers";
 import type { ColorInfo } from "@/types";
 
 /**
@@ -43,7 +44,7 @@ export function PaletteColorStrip({ colors }: { colors: ColorInfo[] }) {
                 <span className="font-mono text-xs opacity-90">{color.hex.toUpperCase()}</span>
               </span>
               <span
-                className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 rtl-swatch-copy"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
               >
@@ -94,16 +95,17 @@ export function PaletteColorStrip({ colors }: { colors: ColorInfo[] }) {
 }
 
 export function PaletteBreadcrumb({ paletteName }: { paletteName: string }) {
+  const t = useDict().nav2;
   return (
-    <nav aria-label="Breadcrumb" className="mb-6 text-sm text-ink-faint">
+    <nav aria-label={t.breadcrumb} className="mb-6 text-sm text-ink-faint">
       <Link href="/" className="hover:text-ink">
-        Home
+        {t.home}
       </Link>
       <span aria-hidden className="mx-1.5">
         /
       </span>
       <Link href="/explore" className="hover:text-ink">
-        Palettes
+        {t.palettes}
       </Link>
       <span aria-hidden className="mx-1.5">
         /

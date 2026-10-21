@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Play } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
 import { bestTextColor } from "@/lib/colors";
+import { useDict } from "@/components/providers";
 import { cn } from "@/lib/utils";
 import type { PaletteSummary } from "@/types";
 
@@ -22,6 +23,7 @@ const MODES: { key: PreviewMode; label: string }[] = [
  * colors so visitors can see the palette in action before copying anything.
  */
 export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; onClose: () => void }) {
+  const t = useDict().try;
   const [mode, setMode] = useState<PreviewMode>("website");
   const c = palette.colors.map((x) => x.hex);
   // Defensive defaults — a malformed palette must never crash the page.
@@ -53,13 +55,13 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
         >
           <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">Try colors — {palette.name}</p>
-              <p className="text-xs text-ink-faint">Live preview painted with this palette</p>
+              <p className="truncate text-sm font-semibold">{t.title(palette.name)}</p>
+              <p className="text-xs text-ink-faint">{t.sub}</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close preview"
+              aria-label={t.close}
               className="rounded-full p-2 text-ink-soft transition hover:bg-surface-raised"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -79,7 +81,7 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
                     : "bg-surface-raised text-ink-soft hover:text-ink"
                 )}
               >
-                {m.label}
+                {t.modes[m.key]}
               </button>
             ))}
           </div>
@@ -119,13 +121,13 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
               <div className="flex justify-center">
                 <div className="w-56 overflow-hidden rounded-[2rem] border-4 border-line shadow-lifted">
                   <div className="px-4 py-3 text-center text-xs font-bold" style={{ backgroundColor: primary, color: onPrimary }}>
-                    App title
+                    {t.appTitle}
                   </div>
                   <div className="space-y-2 p-3" style={{ backgroundColor: secondary, color: onSecondary }}>
                     {rest.concat(rest.slice(0, 2)).slice(0, 4).map((hex, i) => (
                       <div key={i} className="flex items-center gap-2 rounded-xl p-2.5 text-[10px] font-semibold" style={{ backgroundColor: hex, color: bestTextColor(hex) }}>
                         <span className="h-5 w-5 rounded-full" style={{ backgroundColor: accent }} />
-                        List item {i + 1}
+                        {t.listItem(i + 1)}
                       </div>
                     ))}
                   </div>
@@ -133,9 +135,9 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
                     <span className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold shadow-soft" style={{ backgroundColor: accent, color: onAccent }}>+</span>
                   </div>
                   <div className="flex justify-around py-2" style={{ backgroundColor: primary, color: onPrimary }}>
-                    <span className="text-[10px]">Home</span>
-                    <span className="text-[10px] opacity-60">Search</span>
-                    <span className="text-[10px] opacity-60">Profile</span>
+                    <span className="text-[10px]">{t.home}</span>
+                    <span className="text-[10px] opacity-60">{t.search}</span>
+                    <span className="text-[10px] opacity-60">{t.profile}</span>
                   </div>
                 </div>
               </div>
@@ -150,7 +152,7 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
                   {palette.name}
                 </p>
                 <p className="mt-1 px-8 text-xs font-medium text-white/85 drop-shadow">
-                  Poster mockup using a {c.length}-color gradient
+                  {t.posterSub(c.length)}
                 </p>
                 <span className="mt-4 rounded-full bg-white/90 px-4 py-1.5 text-[10px] font-bold text-black">
                   {palette.category}
@@ -162,8 +164,8 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
           <div className="flex flex-wrap items-center gap-2 border-t border-line px-5 py-3.5">
             <CopyButton
               value={c.join(", ")}
-              label="Copy all colors"
-              toastMessage="All palette colors copied."
+              label={t.copyAll}
+              toastMessage={t.copiedAll}
               className="!py-2 text-xs"
             />
             {c.map((hex, i) => (
@@ -175,7 +177,7 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
                 className="h-7 w-7 rounded-lg"
               />
             ))}
-            <span className="ml-auto text-[10px] text-ink-faint">Copying unlocks after the 30s ad</span>
+            <span className="ml-auto text-[10px] text-ink-faint">{t.adNote}</span>
           </div>
         </motion.div>
       </motion.div>
@@ -185,6 +187,7 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
 
 /** "Try colors" button shown under each palette card. */
 export function TryColorsButton({ onClick }: { onClick: () => void }) {
+  const t = useDict();
   return (
     <button
       type="button"
@@ -192,7 +195,7 @@ export function TryColorsButton({ onClick }: { onClick: () => void }) {
       className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-soft transition hover:bg-brand-700 active:scale-[0.98]"
     >
       <Play className="h-3.5 w-3.5" aria-hidden />
-      Try colors
+      {t.common.tryColors}
     </button>
   );
 }

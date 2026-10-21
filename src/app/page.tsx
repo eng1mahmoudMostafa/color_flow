@@ -4,7 +4,7 @@ import { listPalettes } from "@/lib/palettes";
 import { CATEGORY_META } from "@/lib/data/palettes";
 import { GRADIENTS } from "@/lib/data/gradients";
 import { PaletteCard } from "@/components/palette-card";
-import { getLang, DICT } from "@/lib/i18n";
+import { getLang, DICT, categoryLabel } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -116,7 +116,7 @@ export default async function HomePage() {
                 href={`/explore?category=${c.key}`}
                 className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-ink-soft transition hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-400"
               >
-                {c.label}
+                {categoryLabel(c.key, lang, c.label)}
               </Link>
             ))}
           </div>

@@ -65,7 +65,7 @@ export function Navbar({ lang = "en" }: { lang?: Lang }) {
             type="button"
             onClick={() => setMobileOpen((o) => !o)}
             aria-expanded={mobileOpen}
-            aria-label="Toggle navigation menu"
+            aria-label={lang === "ar" ? "قائمة التنقل" : "Toggle navigation menu"}
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-ink-soft ring-1 ring-line md:hidden"
           >
             {mobileOpen ? <X className="h-4 w-4" aria-hidden /> : <Menu className="h-4 w-4" aria-hidden />}

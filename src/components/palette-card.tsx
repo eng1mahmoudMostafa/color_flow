@@ -10,8 +10,11 @@ import { FavoriteHeart } from "@/components/favorite-heart";
 import { ColorModal } from "@/components/color-modal";
 import type { PaletteSummary } from "@/types";
 import { CATEGORY_LABELS } from "@/lib/data/palettes";
+import { categoryLabel, useLang, useDict } from "@/components/providers";
 
 export function PaletteCard({ palette, index = 0 }: { palette: PaletteSummary; index?: number }) {
+  const lang = useLang();
+  const t = useDict().common;
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const [tryOpen, setTryOpen] = useState(false);
 
@@ -45,15 +48,15 @@ export function PaletteCard({ palette, index = 0 }: { palette: PaletteSummary; i
                 {palette.name}
               </Link>
               <p className="mt-0.5 text-xs text-ink-faint">
-                {CATEGORY_LABELS[palette.category] ?? palette.category}
+                {categoryLabel(palette.category, lang, CATEGORY_LABELS[palette.category])}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <FavoriteHeart slug={palette.slug} name={palette.name} />
               <CopyButton
                 value={palette.colors.map((c) => c.hex).join(", ")}
-                label="Copy palette"
-                toastMessage="Full palette copied to clipboard."
+                label={t.copyPalette}
+                toastMessage={t.paletteCopied}
                 className="!px-3 !py-1.5 text-xs"
               />
             </div>

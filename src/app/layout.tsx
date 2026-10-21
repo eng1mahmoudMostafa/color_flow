@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     //  3. toast unmount without exit-animation DOM ops that clash with Translate.
     <html lang={lang} dir={isRtl(lang) ? "rtl" : "ltr"} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
-        <Providers>
+        <Providers lang={lang}>
           {/* App-level recovery: a transient auto-translate DOM rewrite anywhere
               on the page remounts the UI silently instead of showing the
               global error page. Copy actions inside survive because the toast

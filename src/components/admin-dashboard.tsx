@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { upload } from "@vercel/blob/client";
 import { Upload, X, Trash2, Eye, Plus, Image as ImageIcon, Edit2, Play } from "lucide-react";
 import { AdModal } from "@/components/ad-modal";
+import { useDict } from "@/components/providers";
 
 interface Ad { id: string; title: string; message: string; mediaUrl: string; mediaType: "image" | "video"; linkUrl: string | null; durationSeconds: number; slot: number; active: boolean; permanent: boolean; expiresAt: string | null; impressions: number; clicks: number; createdAt: string; }
 
@@ -17,6 +18,7 @@ interface Stats {
 const TOTAL_SLOTS = 3;
 
 export default function AdminDashboard() {
+  const t = useDict().admin;
   const [ads, setAds] = useState<Ad[]>([]);
   const [storage, setStorage] = useState<{ usedBytes: number; limitBytes: number } | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -234,32 +236,32 @@ export default function AdminDashboard() {
 
   const slotAds = Array.from({ length: TOTAL_SLOTS }, (_, i) => ads.find((a) => a.slot === i + 1)).filter(Boolean) as Ad[];
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground">Loading dashboard…</div>;
+  if (loading) return <div className="p-8 text-center text-muted-foreground">{t.loading}</div>;
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"><Plus size={18} /> New Ad</button>
+        <h1 className="text-2xl font-bold">{t.title}</h1>
+        <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"><Plus size={18} /> {t.newAd}</button>
       </div>
 
       {notice && (<div className={`p-3 rounded-lg text-sm ${notice.type === "ok" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"}`}>{notice.msg}</div>)}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[{ label: "Palettes", value: stats.totalPalettes ?? stats.overview?.palettes ?? 0 }, { label: "Active Ads", value: stats.activeAds ?? stats.ads?.verifiedAds ?? 0 }, { label: "Impressions", value: stats.totalImpressions ?? 0 }, { label: "Clicks", value: stats.totalClicks ?? 0 }].map((s) => (<div key={s.label} className="rounded-xl border p-4 text-center"><div className="text-2xl font-bold">{Number(s.value ?? 0).toLocaleString()}</div><div className="text-xs text-muted-foreground">{s.label}</div></div>))}
+          {[{ label: t.cards.palettes, value: stats.totalPalettes ?? stats.overview?.palettes ?? 0 }, { label: t.cards.activeAds, value: stats.activeAds ?? stats.ads?.verifiedAds ?? 0 }, { label: t.cards.impressions, value: stats.totalImpressions ?? 0 }, { label: t.cards.clicks, value: stats.totalClicks ?? 0 }].map((s) => (<div key={s.label} className="rounded-xl border p-4 text-center"><div className="text-2xl font-bold">{Number(s.value ?? 0).toLocaleString()}</div><div className="text-xs text-muted-foreground">{s.label}</div></div>))}
         </div>
       )}
 
       {stats && (
         <div className="rounded-xl border p-4 space-y-4">
-          <h2 className="font-semibold text-lg">Analytics</h2>
+          <h2 className="font-semibold text-lg">{t.analytics}</h2>
           {/* Horizontal bar charts over the live stats (CSS bars, no chart lib). */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">Ad verification</p>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">{t.adVerification}</p>
               {[
-                { label: "Verified", value: stats.ads?.verifiedAds ?? 0, cls: "bg-emerald-500" },
-                { label: "Failed", value: stats.ads?.failedAds ?? 0, cls: "bg-red-400" },
+                { label: t.verified, value: stats.ads?.verifiedAds ?? 0, cls: "bg-emerald-500" },
+                { label: t.failed, value: stats.ads?.failedAds ?? 0, cls: "bg-red-400" },
               ].map((row) => {
                 const total = Math.max(1, (stats.ads?.verifiedAds ?? 0) + (stats.ads?.failedAds ?? 0));
                 return (
@@ -269,14 +271,14 @@ export default function AdminDashboard() {
                   </div>
                 );
               })}
-              <p className="mt-1 text-xs text-muted-foreground">Conversion: <span className="font-semibold">{Math.round(stats.ads?.conversion ?? 0)}%</span> of started ads grant access.</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t.conversion}: <span className="font-semibold">{Math.round(stats.ads?.conversion ?? 0)}%</span> of started ads grant access.</p>
             </div>
             <div>
               <p className="mb-2 text-xs font-semibold text-muted-foreground">Overview</p>
               {[
-                { label: "Users", value: stats.overview?.users ?? 0 },
-                { label: "Ad sessions", value: stats.overview?.adSessions ?? 0 },
-                { label: "Active copy access", value: stats.overview?.activeAccess ?? 0 },
+                { label: t.users, value: stats.overview?.users ?? 0 },
+                { label: t.adSessions, value: stats.overview?.adSessions ?? 0 },
+                { label: t.activeAccess, value: stats.overview?.activeAccess ?? 0 },
               ].map((row) => {
                 const max = Math.max(...[stats.overview?.users ?? 0, stats.overview?.adSessions ?? 0, stats.overview?.activeAccess ?? 0], 1);
                 return (
@@ -293,14 +295,14 @@ export default function AdminDashboard() {
 
       <div className="rounded-xl border p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-lg">Advertisement Slots</h2>
-          <button onClick={() => setPreviewOpen(true)} className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border hover:bg-muted"><Play size={14} /> Preview ads</button>
+          <h2 className="font-semibold text-lg">{t.slots}</h2>
+          <button onClick={() => setPreviewOpen(true)} className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border hover:bg-muted"><Play size={14} /> {t.previewAds}</button>
         </div>
-        <p className="text-sm text-muted-foreground">Each slot holds one ad. Delete an ad to remove its file. Ads expire automatically after 30 days.</p>
+        <p className="text-sm text-muted-foreground">{t.slotsNote}</p>
         {storage && (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Storage used</span>
+              <span>{t.storageUsed}</span>
               <span>{(storage.usedBytes / 1048576).toFixed(1)} MB / {(storage.limitBytes / 1048576).toFixed(0)} MB</span>
             </div>
             <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -312,11 +314,11 @@ export default function AdminDashboard() {
           {Array.from({ length: TOTAL_SLOTS }, (_, i) => {
             const ad = slotAds.find((a) => a.slot === i + 1);
             return (<div key={i} className="rounded-lg border border-dashed p-3 min-h-[160px] flex flex-col items-center justify-center text-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">Slot {i + 1}</span>
+              <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">{t.slot(i + 1)}</span>
               {ad ? (<>
                 {ad.mediaType?.toLowerCase() === "image" ? <img src={ad.mediaUrl} alt={ad.title} className="w-full h-24 object-cover rounded" /> : <video src={ad.mediaUrl} className="w-full h-24 object-cover rounded bg-black" preload="metadata" controls playsInline muted />}
                 <div className="text-sm font-medium truncate w-full">{ad.title}</div>
-                <div className="text-xs text-muted-foreground">{ad.durationSeconds}s &middot; {ad.impressions} views{!ad.active && " · paused"}</div>
+                <div className="text-xs text-muted-foreground">{ad.durationSeconds}s &middot; {ad.impressions} {t.views}{!ad.active && ` · ${t.paused}`}</div>
                 <div className="flex gap-1"><button onClick={() => handleEdit(ad)} className="p-1.5 rounded hover:bg-muted"><Edit2 size={14} /></button><button onClick={() => handleDelete(ad)} className="p-1.5 rounded hover:bg-red-100 text-red-600"><Trash2 size={14} /></button></div>
               </>) : <span className="text-xs text-muted-foreground">Empty</span>}
             </div>);
@@ -326,7 +328,7 @@ export default function AdminDashboard() {
       <AnimatePresence>
         {showForm && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="rounded-xl border p-5 space-y-4">
-            <div className="flex items-center justify-between"><h2 className="font-semibold text-lg">{editingId ? "Edit Ad" : "Create Ad"}</h2><button onClick={resetForm} className="p-1 hover:bg-muted rounded"><X size={18} /></button></div>
+            <div className="flex items-center justify-between"><h2 className="font-semibold text-lg">{editingId ? t.editAd : t.createAd}</h2><button onClick={resetForm} className="p-1 hover:bg-muted rounded"><X size={18} /></button></div>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <input required placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full rounded-lg border px-3 py-2 bg-transparent" />
@@ -342,15 +344,15 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-3">
                 <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted disabled:opacity-50">
-                  <Upload size={16} /> {uploading ? "Uploading…" : "Upload"}
+                  <Upload size={16} /> {uploading ? t.uploading : t.upload}
                 </button>
                 <input type="text" placeholder="…or paste image/video URL: https://…" value={/^https?:\/\//i.test(form.mediaUrl) ? form.mediaUrl : ""} onChange={(e) => setMediaUrlInput(e.target.value)} className="flex-1 min-w-0 rounded-lg border px-3 py-2 bg-transparent" />
                 {form.mediaUrl && <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">{form.mediaType?.toLowerCase() === "video" ? <Eye size={16} /> : <ImageIcon size={16} />}<span className="truncate max-w-[200px]">{form.mediaUrl.split("/").pop()}</span></div>}
               </div>
               <p className="mt-1 text-[11px] text-muted-foreground">Tip: upload a free image to Imgur / Catbox / Cloudinary, then paste its direct link here — this is the reliable way on the live site.</p>
               {diag && <p className="mt-1 text-[11px] font-mono break-all rounded bg-muted p-2 text-muted-foreground">Debug: {diag}</p>}
-            </div>              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />Active</label>
-              <div className="flex gap-2"><button type="submit" className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90">{editingId ? "Update" : "Create"}</button><button type="button" onClick={resetForm} className="px-4 py-2 rounded-lg border hover:bg-muted">Cancel</button></div>
+            </div>              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />{t.active}</label>
+              <div className="flex gap-2"><button type="submit" className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90">{editingId ? t.update : t.create}</button><button type="button" onClick={resetForm} className="px-4 py-2 rounded-lg border hover:bg-muted">{t.cancel}</button></div>
               {submitError && <p className="text-sm text-red-600 dark:text-red-400">⚠ {submitError}</p>}
             </form>
           </motion.div>
@@ -359,10 +361,10 @@ export default function AdminDashboard() {
 
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50"><tr><th className="text-left p-3">Slot</th><th className="text-left p-3">Title</th><th className="text-left p-3">Duration</th><th className="text-left p-3">Views</th><th className="text-left p-3">Clicks</th><th className="text-left p-3">Expires</th><th className="text-left p-3">Actions</th></tr></thead>
+          <thead className="bg-muted/50"><tr><th className="text-left p-3">{t.table.slot}</th><th className="text-left p-3">{t.table.title}</th><th className="text-left p-3">{t.table.duration}</th><th className="text-left p-3">{t.table.views}</th><th className="text-left p-3">{t.table.clicks}</th><th className="text-left p-3">{t.table.expires}</th><th className="text-left p-3">{t.table.actions}</th></tr></thead>
           <tbody>
-            {ads.map((ad) => (<tr key={ad.id} className="border-t"><td className="p-3">{ad.slot}</td><td className="p-3 font-medium">{ad.title}</td><td className="p-3">{ad.durationSeconds}s</td><td className="p-3">{ad.impressions}</td><td className="p-3">{ad.clicks}</td><td className="p-3 text-xs">{ad.permanent ? "Never" : ad.expiresAt ? new Date(ad.expiresAt).toLocaleDateString() : "—"}</td><td className="p-3 flex gap-1"><button onClick={() => setPreviewOpen(true)} title="Preview as visitor" className="p-1.5 rounded hover:bg-muted"><Eye size={14} /></button><button onClick={() => handleEdit(ad)} className="p-1.5 rounded hover:bg-muted"><Edit2 size={14} /></button><button onClick={() => handleDelete(ad)} className="p-1.5 rounded hover:bg-red-100 text-red-600"><Trash2 size={14} /></button></td></tr>))}
-            {ads.length === 0 && (<tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No ads yet.</td></tr>)}
+            {ads.map((ad) => (<tr key={ad.id} className="border-t"><td className="p-3">{ad.slot}</td><td className="p-3 font-medium">{ad.title}</td><td className="p-3">{ad.durationSeconds}s</td><td className="p-3">{ad.impressions}</td><td className="p-3">{ad.clicks}</td><td className="p-3 text-xs">{ad.permanent ? t.never : ad.expiresAt ? new Date(ad.expiresAt).toLocaleDateString() : "—"}</td><td className="p-3 flex gap-1"><button onClick={() => setPreviewOpen(true)} title="Preview as visitor" className="p-1.5 rounded hover:bg-muted"><Eye size={14} /></button><button onClick={() => handleEdit(ad)} className="p-1.5 rounded hover:bg-muted"><Edit2 size={14} /></button><button onClick={() => handleDelete(ad)} className="p-1.5 rounded hover:bg-red-100 text-red-600"><Trash2 size={14} /></button></td></tr>))}
+            {ads.length === 0 && (<tr><td colSpan={7} className="p-6 text-center text-muted-foreground">{t.noAds}</td></tr>)}
           </tbody>
         </table>
       </div>

@@ -6,6 +6,7 @@ import { normalizeHex, contrastRatio, contrastGrade, bestTextColor } from "@/lib
 import { findColorInPalettes, listPalettes } from "@/lib/palettes";
 import { PaletteCard } from "@/components/palette-card";
 import { CopyButton } from "@/components/copy-button";
+import { DICT, getLang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,9 @@ export default async function ColorPage({ params }: { params: Params }) {
 
   const foundIn = await findColorInPalettes(hex);
   const { palettes: related } = await listPalettes({ perPage: 4 });
+  const lang = await getLang();
+  const t = DICT[lang].colorPage;
+  const c = DICT[lang].color;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -42,11 +46,11 @@ export default async function ColorPage({ params }: { params: Params }) {
         <div className="flex flex-col items-start justify-between gap-6 p-8 sm:flex-row sm:items-end" style={{ backgroundColor: hex, color: best === "#0b1020" ? "#0b1020" : "#ffffff" }}>
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight">{hex.toUpperCase()}</h1>
-            <p className="mt-1 text-sm opacity-80">{foundIn[0]?.color.name ?? "Color detail"}</p>
+            <p className="mt-1 text-sm opacity-80">{foundIn[0]?.color.name ?? t.colorDetail}</p>
           </div>
           <CopyButton
             value={hex.toUpperCase()}
-            label="Copy HEX"
+            label={c.copyHex}
             toastMessage={`${hex.toUpperCase()} copied to clipboard.`}
           />
         </div>
@@ -67,7 +71,7 @@ export default async function ColorPage({ params }: { params: Params }) {
           href={`/color/${compHex.replace("#", "")}`}
           className="flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 transition hover:bg-surface-raised"
         >
-          <span className="text-xs font-semibold uppercase tracking-widest text-ink-faint">Complementary</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-ink-faint">{t.complementary}</span>
           <span className="flex items-center gap-2 font-mono text-sm">
             <span className="h-4 w-4 rounded-full ring-1 ring-black/10" style={{ backgroundColor: compHex }} aria-hidden />
             {compHex.toUpperCase()}
@@ -77,18 +81,18 @@ export default async function ColorPage({ params }: { params: Params }) {
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-line bg-surface p-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-ink-faint">Contrast on white</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink-faint">{t.contrastWhite}</p>
           <p className="mt-1.5 font-mono text-lg">{onWhite.toFixed(2)}:1 — {contrastGrade(onWhite)}</p>
         </div>
         <div className="rounded-xl border border-line bg-surface p-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-ink-faint">Contrast on black</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink-faint">{t.contrastBlack}</p>
           <p className="mt-1.5 font-mono text-lg">{onBlack.toFixed(2)}:1 — {contrastGrade(onBlack)}</p>
         </div>
       </div>
 
       {foundIn.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-xl font-bold tracking-tight">Found in palettes</h2>
+          <h2 className="text-xl font-bold tracking-tight">{t.foundIn}</h2>
           <ul className="mt-3 flex flex-wrap gap-2.5">
             {foundIn.map((m) => (
               <li key={m.palette.slug}>
@@ -96,7 +100,7 @@ export default async function ColorPage({ params }: { params: Params }) {
                   href={`/palette/${m.palette.slug}`}
                   className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition hover:bg-surface-raised"
                 >
-                  {m.palette.name} — as {m.color.name}
+                  {m.palette.name} — {t.as(m.color.name)}
                 </Link>
               </li>
             ))}
@@ -105,7 +109,7 @@ export default async function ColorPage({ params }: { params: Params }) {
       )}
 
       <section className="mt-10">
-        <h2 className="mb-5 text-xl font-bold tracking-tight">Explore more palettes</h2>
+        <h2 className="mb-5 text-xl font-bold tracking-tight">{t.exploreMore}</h2>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {related.map((p, i) => (
             <PaletteCard key={p.slug} palette={p} index={i} />

@@ -20,7 +20,7 @@ export function LangToggle({ current }: { current: "en" | "ar" }) {
       type="button"
       onClick={onClick}
       disabled={pending}
-      aria-label={current === "ar" ? "Switch to English" : "التبديل إلى العربية"}
+      aria-label={current === "ar" ? "التبديل إلى الإنجليزية" : "التبديل إلى العربية"}
       title={current === "ar" ? "English" : "العربية"}
       className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface-raised hover:text-ink disabled:opacity-50"
     >

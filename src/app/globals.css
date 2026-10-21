@@ -46,6 +46,49 @@ body {
   scrollbar-color: rgb(var(--line)) transparent;
 }
 
+/* ---------------------------------------------------------------------------
+   RTL (Arabic) adjustments
+   Tailwind's left/right utilities are physical, so any element positioned with
+   `left-*` / `right-*` must be flipped when the document direction is RTL.
+   --------------------------------------------------------------------------- */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Search bar: magnifier icon + clear button live on opposite sides. */
+[dir="rtl"] .rtl-search-icon {
+  left: auto;
+  right: 0.75rem;
+}
+[dir="rtl"] .rtl-search-input {
+  padding-left: 2.25rem;
+  padding-right: 2.25rem;
+}
+
+/* Dropdown menus (export) should open toward the inline-start edge. */
+[dir="rtl"] .rtl-dropdown {
+  right: auto;
+  left: 0;
+}
+
+/* Copy icon floating on a color swatch. */
+[dir="rtl"] .rtl-swatch-copy {
+  right: auto;
+  left: 0.5rem;
+}
+
+/* Arrow glyphs (← / →) point the wrong way in RTL. */
+[dir="rtl"] .rtl-arrow {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+/* Latin-only runs (hex codes, phone numbers) keep their own direction. */
+[dir="rtl"] .ltr-nums {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 /* Reduced motion respect */
 @media (prefers-reduced-motion: reduce) {
   html {

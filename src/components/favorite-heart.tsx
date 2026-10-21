@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { isFavorite, onFavoritesChange, toggleFavorite } from "@/lib/favorites";
+import { useDict } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
 /** Heart toggle on palette cards — guest favorites kept in localStorage. */
 export function FavoriteHeart({ slug, name }: { slug: string; name: string }) {
+  const t = useDict().fav;
   const [fav, setFav] = useState(false);
   const [pulse, setPulse] = useState(false);
 
@@ -27,8 +29,8 @@ export function FavoriteHeart({ slug, name }: { slug: string; name: string }) {
         }
       }}
       aria-pressed={fav}
-      aria-label={fav ? `Remove ${name} from favorites` : `Add ${name} to favorites`}
-      title={fav ? "Remove from favorites" : "Add to favorites"}
+      aria-label={fav ? t.remove(name) : t.add(name)}
+      title={fav ? t.removeShort : t.addShort}
       className={cn(
         "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 transition",
         fav
