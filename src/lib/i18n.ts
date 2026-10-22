@@ -69,6 +69,7 @@ export const DICT = {
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       contact: "Contact Us",
+      aboutLink: "About Us",
     },
     explore: {
       title: "Explore palettes",
@@ -309,6 +310,7 @@ export const DICT = {
       privacy: "Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø®ØµÙˆØµÙŠØ©",
       terms: "Ø´Ø±ÙˆØ· Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…",
       contact: "Ø§ØªØµÙ„ Ø¨Ù†Ø§",
+      aboutLink: "Ø§Ø¬Ø§ÙˆØ© Ø§Ù„Ø³Ø³ÙŠÙ‡",
     },
     explore: {
       title: "Ø§Ø³ØªÙƒØ´Ù Ø§Ù„Ø¨Ø§Ù„ÙŠØªØ§Øª",

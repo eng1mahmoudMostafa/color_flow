@@ -44,7 +44,7 @@ export function Footer({ lang = "en" }: { lang?: Lang }) {
             ))}
           </nav>
 
-          {/* Legal links — Privacy / Terms / Contact */ }
+          {/* Legal links — Privacy / Terms / Contact / About */ }
           <nav aria-label="Legal" className="grid grid-cols-2 gap-x-8 gap-y-1.5 sm:grid-cols-3">
             <Link
               href="/privacy"
@@ -63,6 +63,12 @@ export function Footer({ lang = "en" }: { lang?: Lang }) {
               className="text-sm text-ink-soft transition hover:text-brand-600 dark:hover:text-brand-400"
             >
               {t.contact}
+            </Link>
+            <Link
+              href="/about"
+              className="text-sm text-ink-soft transition hover:text-brand-600 dark:hover:text-brand-400"
+            >
+              {t.aboutLink}
             </Link>
           </nav>
         </div>
