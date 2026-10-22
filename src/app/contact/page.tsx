@@ -23,6 +23,16 @@ export default async function ContactPage() {
     backHome: string;
   };
 
+  async function handleEmailClick(e: React.MouseEvent) {
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL);
+    } catch {
+      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Hello ${SITE_NAME}`)}`;
+      return;
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8" dir={isRtl ? "rtl" : "ltr"}>
       <header className="mb-10 text-center">
@@ -47,12 +57,12 @@ export default async function ContactPage() {
               );
             })()}
           </p>
-          <a
-            href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Hello ${SITE_NAME}`)}`}
+          <button
+            onClick={handleEmailClick}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
           >
             {t.writeEmail}
-          </a>
+          </button>
         </div>
 
         <div className="rounded-lg border border-line bg-white dark:bg-surface p-6 shadow-sm dark:text-ink">
