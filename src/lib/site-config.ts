@@ -27,7 +27,7 @@ export const SITE_URL = resolveSiteUrl();
 
 /** Public contact address shown in the footer and on the contact page. */
 export const CONTACT_EMAIL =
-  (process.env.CONTACT_EMAIL || "support@colorflow.app").trim().toLowerCase();
+  (process.env.CONTACT_EMAIL || "mh2992007492007@gmail.com").trim().toLowerCase();
 
 /** WhatsApp number in international format (digits only) and display form. */
 export const WHATSAPP_NUMBER = "201130278851";
