@@ -7,9 +7,19 @@ import { CopyButton } from "@/components/copy-button";
 import { bestTextColor } from "@/lib/colors";
 import { useDict } from "@/components/providers";
 import { cn } from "@/lib/utils";
-import type { PaletteSummary } from "@/types";
 
 type PreviewMode = "website" | "app" | "poster";
+
+/**
+ * Any set of colors can be previewed — a saved palette from the database or a
+ * freshly generated palette from the Color Wheel. `colors` are plain hex
+ * strings so the wheel can preview its own suggestions.
+ */
+export type PreviewPalette = {
+  name: string;
+  category?: string;
+  colors: string[];
+};
 
 const MODES: { key: PreviewMode; label: string }[] = [
   { key: "website", label: "Website" },
@@ -22,10 +32,10 @@ const MODES: { key: PreviewMode; label: string }[] = [
  * Renders mock Website / Mobile / Poster designs painted with the palette
  * colors so visitors can see the palette in action before copying anything.
  */
-export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; onClose: () => void }) {
+export function TryColorsModal({ palette, onClose }: { palette: PreviewPalette; onClose: () => void }) {
   const t = useDict().try;
   const [mode, setMode] = useState<PreviewMode>("website");
-  const c = palette.colors.map((x) => x.hex);
+  const c = palette.colors;
   // Defensive defaults — a malformed palette must never crash the page.
   const [primary = "#3b6df6", secondary = "#1f2937", accent = "#8b5cf6", ...rest] = c;
   const onPrimary = bestTextColor(primary);
@@ -155,7 +165,7 @@ export function TryColorsModal({ palette, onClose }: { palette: PaletteSummary; 
                   {t.posterSub(c.length)}
                 </p>
                 <span className="mt-4 rounded-full bg-white/90 px-4 py-1.5 text-[10px] font-bold text-black">
-                  {palette.category}
+                  {palette.category ?? "ColorFlow"}
                 </span>
               </div>
             )}

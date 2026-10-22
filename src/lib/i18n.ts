@@ -539,6 +539,10 @@ export const COLOR_WHEEL: Record<Lang, {
   copied: string;
   suggestPalette: string;
   tryPalette: string;
+  preview: string;
+  previewSub: string;
+  previewTitle: (name: string) => string;
+  copyNote: string;
 }> = {
   en: {
     title: "Color Wheel",
@@ -554,6 +558,10 @@ export const COLOR_WHEEL: Record<Lang, {
     copied: "Copied!",
     suggestPalette: "Suggested palette",
     tryPalette: "Try this palette",
+    preview: "Preview on website & app",
+    previewSub: "See these colors live on a website and mobile app mockup.",
+    previewTitle: (name: string) => `Preview — ${name}`,
+    copyNote: "Copying unlocks after a 30-second ad",
   },
   ar: {
     title: "عجلة الألوان",
@@ -569,5 +577,9 @@ export const COLOR_WHEEL: Record<Lang, {
     copied: "تم النسخ!",
     suggestPalette: "باليتة مقترحة",
     tryPalette: "جرب هذه الباليتة",
+    preview: "معاينة على الموقع والتطبيق",
+    previewSub: "شاهد هذه الألوان مباشرة على نموذج موقع ويب وتطبيق موبايل.",
+    previewTitle: (name: string) => `معاينة — ${name}`,
+    copyNote: "النسخ يُفتح بعد مشاهدة إعلان 30 ثانية",
   },
 };

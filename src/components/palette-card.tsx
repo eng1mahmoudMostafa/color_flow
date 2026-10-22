@@ -79,7 +79,16 @@ export function PaletteCard({ palette, index = 0 }: { palette: PaletteSummary; i
         </div>
       </motion.article>
 
-      {tryOpen && <TryColorsModal palette={palette} onClose={() => setTryOpen(false)} />}
+      {tryOpen && (
+        <TryColorsModal
+          palette={{
+            name: palette.name,
+            category: palette.category,
+            colors: palette.colors.map((c) => c.hex),
+          }}
+          onClose={() => setTryOpen(false)}
+        />
+      )}
 
       {activeColor && (
         <ColorModal

@@ -23,9 +23,14 @@ import {
   ShoppingCart,
   BookOpen,
   Smartphone,
+  MonitorSmartphone,
 } from 'lucide-react';
-import { useLang } from '@/components/providers';
+import { useLang, useDict } from '@/components/providers';
 import { COLOR_WHEEL } from '@/lib/i18n';
+import { useAccess } from '@/components/access-provider';
+import { useToast } from '@/components/toast';
+import { TryColorsModal } from '@/components/try-colors-modal';
+import { copyToClipboard } from '@/lib/utils';
 
 type CategoryKey =
   | 'CLASSIC'
@@ -174,19 +179,50 @@ export function ColorWheel() {
   const lang = useLang();
   const t = COLOR_WHEEL[lang];
   const isRtl = lang === 'ar';
+  const { requestCopy } = useAccess();
+  const { push } = useToast();
+  const common = useDict().common;
 
   const [selectedHue, setSelectedHue] = useState(210);
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('MEDICAL');
   const [copied, setCopied] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const baseColor = hslToHex(selectedHue, 70, 50);
   const palette = useMemo(() => suggestPalette(baseColor, selectedCategory), [baseColor, selectedCategory]);
+  const activeCategory = useMemo(
+    () => CATEGORIES.find((c) => c.key === selectedCategory),
+    [selectedCategory]
+  );
 
-  const handleCopy = useCallback((text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(text);
-    setTimeout(() => setCopied(null), 1500);
-  }, []);
+  /**
+   * Copying is gated by the rewarded ad: requestCopy() re-checks access with
+   * the server and opens the ad modal when locked. The clipboard write only
+   * happens once access is granted — and it is replayed automatically right
+   * after the ad finishes, so the visitor never has to click twice.
+   */
+  const handleCopy = useCallback(
+    async (text: string) => {
+      const perform = async () => {
+        const success = await copyToClipboard(text);
+        if (!success) {
+          push(common.clipboardError, 'error');
+          return;
+        }
+        setCopied(text);
+        window.setTimeout(() => setCopied(null), 1500);
+        push(`${text} ${common.copied.toLowerCase()}`, 'success');
+      };
+
+      const allowed = await requestCopy(() => void perform());
+      if (!allowed) {
+        push(common.adLock, 'info');
+        return;
+      }
+      await perform();
+    },
+    [requestCopy, push, common.adLock, common.clipboardError, common.copied]
+  );
 
   const pointerPosition = useMemo(() => {
     const rad = ((selectedHue - 90) * Math.PI) / 180;
@@ -344,7 +380,7 @@ export function ColorWheel() {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-ink">{t.suggestPalette}</h3>
                 <span className="text-xs text-ink-faint">
-                  {CATEGORIES.find((c) => c.key === selectedCategory)?.label.toUpperCase()}
+                  {activeCategory ? t.category(activeCategory.key).toUpperCase() : ''}
                 </span>
               </div>
               <div className="grid grid-cols-5 gap-2">
@@ -358,7 +394,14 @@ export function ColorWheel() {
                   />
                 ))}
               </div>
-              <div className="flex justify-end">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <button
+                  onClick={() => setPreviewOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-brand-600 text-white shadow-soft transition hover:bg-brand-700 active:scale-[0.98]"
+                >
+                  <MonitorSmartphone className="h-4 w-4" aria-hidden />
+                  {t.preview}
+                </button>
                 <button
                   onClick={() => handleCopy(palette.join(', '))}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border border-line bg-surface text-ink transition hover:bg-surface-raised hover:text-brand-600 dark:hover:text-brand-400"
@@ -367,6 +410,7 @@ export function ColorWheel() {
                   {t.tryPalette}
                 </button>
               </div>
+              <p className="text-[11px] text-ink-faint text-end">{t.copyNote}</p>
             </div>
           </div>
 
@@ -395,6 +439,17 @@ export function ColorWheel() {
           )}
         </div>
       </div>
+
+      {previewOpen && (
+        <TryColorsModal
+          palette={{
+            name: activeCategory ? t.category(activeCategory.key) : t.title,
+            category: activeCategory ? t.category(activeCategory.key) : undefined,
+            colors: [baseColor, ...palette],
+          }}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </section>
   );
 }

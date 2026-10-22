@@ -34,19 +34,26 @@ export function CopyButton({ value, toastMessage, className, label = "Copy", var
     if (busy) return;
     setBusy(true);
     try {
-      const allowed = await requestCopy();
+      // `perform` is the actual clipboard write. It runs immediately when the
+      // visitor already has access, and is replayed automatically once the
+      // rewarded ad grants it — no second click needed.
+      const perform = async () => {
+        const success = await copyToClipboard(value);
+        if (success) {
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1600);
+          push(toastMessage ?? `${value} copied to clipboard.`, "success");
+        } else {
+          push(t.clipboardError, "error");
+        }
+      };
+
+      const allowed = await requestCopy(() => void perform());
       if (!allowed) {
         push(t.adLock, "info");
         return;
       }
-      const success = await copyToClipboard(value);
-      if (success) {
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1600);
-        push(toastMessage ?? `${value} copied to clipboard.`, "success");
-      } else {
-        push(t.clipboardError, "error");
-      }
+      await perform();
     } catch {
       // Never let an unexpected error crash the whole app — surface a toast.
       push(t.genericError, "error");
