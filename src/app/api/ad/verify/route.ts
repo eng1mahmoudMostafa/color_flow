@@ -6,6 +6,7 @@ import { getGuestToken, stableHash } from "@/lib/session";
 import { rateLimit, RATE_POLICIES } from "@/lib/rate-limit";
 import { getAdProvider } from "@/lib/ads";
 import { grantAccess } from "@/lib/access";
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -58,8 +59,18 @@ export async function POST(req: NextRequest) {
     }
 
     const finished = await provider.finishAd(adSessionId);
-    if (!finished.accessGranted || !finished.expiresAt) {
+    if (!finished.accessGranted) {
       return fail("AD_NOT_VERIFIED", "Access could not be granted. Please try again.", 500);
+    }
+
+    // Anti-abuse: the ad session must belong to THIS caller. The provider
+    // stores only the hashed guest token, so compare hashes.
+    const adSession = await prisma.adSession.findUnique({
+      where: { id: adSessionId },
+      select: { sessionToken: true },
+    });
+    if (!adSession || adSession.sessionToken !== stableHash(sessionToken)) {
+      return fail("AD_NOT_VERIFIED", "This ad session does not belong to you.", 403);
     }
 
     // Grant 24-hour access persisted in the DB (server clock only).

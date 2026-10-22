@@ -43,6 +43,11 @@ export type AdVerificationResult = {
 
 export type AdFinishResult = {
   accessGranted: boolean;
+  /**
+   * Reserved for providers that compute the access expiry themselves.
+   * The demo provider returns null because the expiry is decided by the
+   * verify route (server clock + 24h), not by the provider.
+   */
   expiresAt: Date | null;
 };
 

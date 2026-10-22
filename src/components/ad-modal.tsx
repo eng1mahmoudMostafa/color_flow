@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { useDict } from "@/components/providers";
@@ -63,12 +63,15 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [videoEnded, setVideoEnded] = useState(false);
 
-  const allAds: Ad[] = [...ads, YOUR_AD];
+  const allAds: Ad[] = useMemo(() => [...ads, YOUR_AD], [ads]);
   const currentAd: Ad | undefined = allAds[currentIndex];
   const hasNext = currentIndex < allAds.length - 1;
   const duration = Math.max(currentAd?.durationSeconds ?? 1, 1);
 
   // Reset per-ad playback state when the modal opens or the ad changes.
+  // `remaining` is deliberately NOT reset here: it is set atomically together
+  // with the index change in `goNext()` so the advance effect never sees a
+  // stale `remaining === 0` for the NEW ad and skips it instantly.
   useEffect(() => {
     setVideoEnded(false);
   }, [currentIndex, open]);
@@ -146,18 +149,30 @@ export function AdModal({ open, onClose, onComplete }: AdModalProps) {
     return () => clearInterval(t);
   }, [open, phase, currentIndex, currentAd]);
 
+  // Advance to the next ad. The index change and the countdown reset happen in
+  // the SAME React batch, so the advance effect never observes
+  // `remaining === 0` for the new ad and skips it without being watched.
+  const goNext = useCallback(() => {
+    const next = currentIndex + 1;
+    const nextAd = allAds[next];
+    if (!nextAd) return;
+    setRemaining(Math.max(nextAd.durationSeconds, 1));
+    setVideoEnded(false);
+    setCurrentIndex(next);
+  }, [allAds, currentIndex]);
+
   // Advance / verify when an ad finishes. While a video is still playing the
   // user is never forced forward — they watch freely or press Skip.
   useEffect(() => {
     if (!open || phase !== "playing" || !currentAd || remaining > 0) return;
     if (mediaPlaying) return;
-    if (hasNext) setCurrentIndex((i) => i + 1);
+    if (hasNext) goNext();
     else void verifyCompletion();
-  }, [open, remaining, phase, currentAd, hasNext, verifyCompletion, mediaPlaying]);
+  }, [open, remaining, phase, currentAd, hasNext, verifyCompletion, mediaPlaying, goNext]);
 
   const handleSkip = () => {
     if (phase !== "playing") return;
-    if (hasNext) setCurrentIndex((i) => i + 1);
+    if (hasNext) goNext();
     else if (remaining === 0 && mediaPlaying) setVideoEnded(true);
   };
 

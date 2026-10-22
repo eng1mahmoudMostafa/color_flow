@@ -21,21 +21,26 @@ const TOLERANCE_MS = 750;
  * The required watch time equals the SUM of durations of all active ads
  * (slot 1 → 3). Cached for 20 seconds to avoid a DB round-trip on every
  * request. Falls back to DEMO_AD_DURATION_SECONDS when no ads are active.
+ *
+ * This MUST match what the client actually shows: the modal plays the active
+ * creatives (skipping any without a media file) and always appends the
+ * house ad (YOUR_AD, DEMO_AD_DURATION_SECONDS). If the server total is lower
+ * than the client total the visitor watches longer than required; if it is
+ * higher the server rejects a legitimately completed ad.
  */
 let totalSecondsCache: { value: number; expiresAt: number } | null = null;
 export async function getActiveAdTotalSeconds(): Promise<number> {
   const now = Date.now();
   if (totalSecondsCache && totalSecondsCache.expiresAt > now) return totalSecondsCache.value;
   const rows = await prisma.advertisement.findMany({
-    where: { active: true },
+    where: { active: true, mediaUrl: { not: "" }, durationSeconds: { gte: 1 } },
     select: { durationSeconds: true },
     take: 3,
     orderBy: [{ slot: "asc" }, { createdAt: "desc" }],
   });
-  const total =
-    rows.length > 0
-      ? Math.min(360, rows.reduce((sum, r) => sum + r.durationSeconds, 0))
-      : DEMO_AD_DURATION_SECONDS;
+  const advertisers = rows.length > 0 ? rows.reduce((sum, r) => sum + r.durationSeconds, 0) : 0;
+  // The house ad (YOUR_AD) is always the last creative in the rotation.
+  const total = Math.min(360, advertisers + DEMO_AD_DURATION_SECONDS);
   totalSecondsCache = { value: total, expiresAt: now + 20_000 };
   return total;
 }
@@ -176,15 +181,15 @@ export class DemoAdProvider implements AdProvider {
       return { accessGranted: false, expiresAt: null };
     }
 
-    const { grantAccess } = await import("@/lib/access");
-    const state = await grantAccess({
-      sessionToken: session.sessionToken,
-      userId: session.userId,
+    // NOTE: the access grant itself is performed by the caller (the verify
+    // route), which owns the RAW guest session token. This provider only ever
+    // sees the HASHED token, so granting here would store a double-hash key
+    // that `getAccessState` would never match.
+    await prisma.adSession.update({
+      where: { id: session.id },
+      data: { completedAt: session.completedAt ?? new Date() },
     });
 
-    return {
-      accessGranted: true,
-      expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
-    };
+    return { accessGranted: true, expiresAt: null };
   }
 }
