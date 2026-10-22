@@ -4,6 +4,7 @@ import { listPalettes } from "@/lib/palettes";
 import { CATEGORY_META } from "@/lib/data/palettes";
 import { GRADIENTS } from "@/lib/data/gradients";
 import { PaletteCard } from "@/components/palette-card";
+import { ColorWheel } from "@/components/color-wheel";
 import { getLang, DICT, categoryLabel } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -122,6 +123,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Color Wheel */}
+      <ColorWheel />
 
       {/* Gradients preview */}
       <section className="border-t border-line bg-surface-raised/50" aria-labelledby="gradients-heading">

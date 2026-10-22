@@ -521,3 +521,53 @@ export async function getLang(): Promise<Lang> {
 }
 
 export const isRtl = (lang: Lang) => lang === "ar";
+
+/* ============================================================================
+   Color Wheel — category translations (Arabic / English)
+   ============================================================================ */
+export const COLOR_WHEEL: Record<Lang, {
+  title: string;
+  subtitle: string;
+  pickCategory: string;
+  category: (key: string) => string;
+  pickColor: string;
+  selectedColor: string;
+  hex: string;
+  rgb: string;
+  hsl: string;
+  copy: string;
+  copied: string;
+  suggestPalette: string;
+  tryPalette: string;
+}> = {
+  en: {
+    title: "Color Wheel",
+    subtitle: "Pick a base color and a category — we suggest a perfect palette for your brand.",
+    pickCategory: "Choose a category",
+    category: (key: string) => key,
+    pickColor: "Pick a color from the wheel",
+    selectedColor: "Selected color",
+    hex: "HEX",
+    rgb: "RGB",
+    hsl: "HSL",
+    copy: "Copy",
+    copied: "Copied!",
+    suggestPalette: "Suggested palette",
+    tryPalette: "Try this palette",
+  },
+  ar: {
+    title: "عجلة الألوان",
+    subtitle: "اختر لوناً أساسياً وفئة — ونقترح لك باليتة مثالية لعلامتك التجارية.",
+    pickCategory: "اختر فئة",
+    category: (key: string) => CATEGORY_AR[key] ?? key,
+    pickColor: "اختر لوناً من العجلة",
+    selectedColor: "اللون المحدد",
+    hex: "اللون (HEX)",
+    rgb: "أحمر أخضر أزرق",
+    hsl: "تشبع إضاءة لون",
+    copy: "نسخ",
+    copied: "تم النسخ!",
+    suggestPalette: "باليتة مقترحة",
+    tryPalette: "جرب هذه الباليتة",
+  },
+};
