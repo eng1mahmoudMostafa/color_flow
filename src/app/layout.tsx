@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SITE_URL } from "@/lib/site-config";
 import { Providers } from "@/components/providers";
 import { CrashBoundary } from "@/components/crash-boundary";
 import { Navbar } from "@/components/navbar";
@@ -6,17 +7,8 @@ import { Footer } from "@/components/footer";
 import { getLang, isRtl } from "@/lib/i18n";
 import "./globals.css";
 
-const rawSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
-const netlifyUrl = (process.env.URL || "").trim(); // injected automatically by Netlify at build time
-const siteUrl =
-  rawSiteUrl && rawSiteUrl !== "undefined" && rawSiteUrl.startsWith("http")
-    ? rawSiteUrl
-    : netlifyUrl && netlifyUrl.startsWith("http")
-      ? netlifyUrl
-      : "https://colorflow.example.com";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "ColorFlow — 10,000+ Curated Color Palettes",
     template: "%s · ColorFlow",

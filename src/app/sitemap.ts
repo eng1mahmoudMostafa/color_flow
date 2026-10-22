@@ -1,21 +1,30 @@
-import type { MetadataRoute } from "next";
+﻿import type { MetadataRoute } from "next";
 import { listPalettes } from "@/lib/palettes";
 import { CATEGORY_META } from "@/lib/data/palettes";
+import { SITE_URL } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.URL || "https://colorflow.example.com";
-
-  const staticRoutes = ["", "/explore", "/categories", "/generator", "/gradients", "/favorites"].map((path) => ({
-    url: `${base}${path}`,
+  const staticRoutes = [
+    "",
+    "/explore",
+    "/categories",
+    "/generator",
+    "/gradients",
+    "/favorites",
+    "/privacy",
+    "/terms",
+    "/contact",
+  ].map((path) => ({
+    url: `${SITE_URL}${path}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
-    priority: path === "" ? 1 : 0.8,
+    priority: path === "" ? 1 : path.startsWith("/privacy") || path.startsWith("/terms") || path.startsWith("/contact") ? 0.5 : 0.8,
   }));
 
   const categoryRoutes = CATEGORY_META.map((c) => ({
-    url: `${base}/explore?category=${c.key}`,
+    url: `\${SITE_URL}/explore?category=${c.key}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.6,
@@ -28,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const { palettes, hasMore } = await listPalettes({ page, perPage: pageSize });
     paletteRoutes.push(
       ...palettes.map((p) => ({
-        url: `${base}/palette/${p.slug}`,
+        url: `${SITE_URL}/palette/${p.slug}`,
         lastModified: new Date(),
         changeFrequency: "monthly" as const,
         priority: 0.7,
@@ -39,3 +48,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...categoryRoutes, ...paletteRoutes];
 }
+
